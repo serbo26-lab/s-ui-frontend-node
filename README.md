@@ -1,76 +1,37 @@
-# S-UI-Frontend
-** A frontend for S-UI **
+# s-ui-frontend-node
 
-[![License](https://img.shields.io/badge/license-GPL%20V3-blue.svg?longCache=true)](https://www.gnu.org/licenses/gpl-3.0.en.html)
+Веб-интерфейс для [s-ui-node](https://github.com/serbo26-lab/s-ui-node).
 
-> **Disclaimer:** This project is only for personal learning and communication, please do not use it for illegal purposes, please do not use it in a production environment
+Проект основан на [alireza0/s-ui-frontend](https://github.com/alireza0/s-ui-frontend). Исходный интерфейс и его авторство сохранены в истории Git.
 
-## [Screenshots](./screenshots.md)
+## Локальная разработка
 
-## Project setup
+Требуется Node.js 26 и npm.
 
-```
-# yarn
-yarn
-
-# npm
-npm install
-
-# pnpm
-pnpm install
-
-# bun
-bun install
-```
-
-### Compiles and hot-reloads for development
-
-```
-# yarn
-yarn dev
-
-# npm
+```bash
+npm ci
 npm run dev
-
-# pnpm
-pnpm dev
-
-# bun
-pnpm run dev
 ```
 
-### Compiles and minifies for production
+Для проверки изменений:
 
-```
-# yarn
-yarn build
-
-# npm
+```bash
+npm run lint -- --max-warnings=0
+npx vue-tsc --noEmit
+npm test
 npm run build
-
-# pnpm
-pnpm build
-
-# bun
-pnpm run build
 ```
 
-### Lints and fixes files
+В режиме разработки Vite направляет запросы `/app/api` на `http://localhost:2095`. Для работы интерфейса с API требуется запущенный backend.
 
-```
-# yarn
-yarn lint
+## Связь с backend
 
-# npm
-npm run lint
+Репозиторий [s-ui-node](https://github.com/serbo26-lab/s-ui-node) использует этот frontend как Git submodule в каталоге `frontend/`. Backend фиксирует конкретный коммит интерфейса: изменения в `main` здесь не попадают в готовую панель до отдельного обновления указателя подмодуля.
 
-# pnpm
-pnpm lint
+## Лицензия и происхождение
 
-# bun
-pnpm run lint
-```
+GNU General Public License v3.0 — см. [LICENSE](LICENSE).
 
-### Customize configuration
+Оригинальный проект: [alireza0/s-ui-frontend](https://github.com/alireza0/s-ui-frontend). Серверная часть оригинала: [alireza0/s-ui](https://github.com/alireza0/s-ui).
 
-See [Configuration Reference](https://vitejs.dev/config/).
+Это самостоятельная ветка разработки на основе открытого исходного кода. Проект не заявляет об официальной поддержке первоначальным автором.
