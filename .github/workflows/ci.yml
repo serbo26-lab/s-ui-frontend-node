@@ -27,7 +27,7 @@ jobs:
           cache-dependency-path: package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       # The tree is clean, so a new warning is a regression and fails the build.
       - name: Lint
