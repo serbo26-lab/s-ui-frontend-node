@@ -6,6 +6,10 @@
     <v-card class="rounded-lg">
       <v-card-title class="d-flex align-center">
         {{ $t('actions.' + title) + " " + $t('objects.tls') }}
+        <span
+          v-if="contextName"
+          class="ms-2 text-body-2"
+        >{{ contextName }}</span>
         <v-spacer />
         <DocLink section="tls" />
       </v-card-title>
@@ -14,6 +18,7 @@
         <v-card class="rounded-lg">
           <v-row>
             <v-col
+              v-if="showName"
               cols="12"
               sm="6"
               md="4"
@@ -35,13 +40,15 @@
                 @update:model-value="changeTlsType"
               >
                 <v-btn>TLS</v-btn>
-                <v-btn>Reality</v-btn>
+                <v-btn v-if="allowReality">
+                  Reality
+                </v-btn>
               </v-btn-toggle>
             </v-col>
           </v-row>
           <v-row>
             <v-col
-              v-if="inTls.server_name != undefined"
+              v-if="!managedMaterial && inTls.server_name != undefined"
               cols="12"
               sm="6"
               md="4"
@@ -112,7 +119,7 @@
             <!-- A certificate provider issues the certificate itself, so
                  sing-box ignores any certificate given by hand once one is
                  chosen. Providers are defined on the TLS page. -->
-            <v-row>
+            <v-row v-if="!managedMaterial">
               <v-col
                 cols="12"
                 sm="6"
@@ -129,7 +136,7 @@
                 />
               </v-col>
             </v-row>
-            <v-row v-if="inTls.certificate_provider == undefined">
+            <v-row v-if="!managedMaterial && inTls.certificate_provider == undefined">
               <v-col>
                 <v-btn-toggle
                   v-model="usePath"
@@ -152,7 +159,10 @@
                 </v-btn-toggle>
               </v-col>
               <v-spacer />
-              <v-col cols="auto">
+              <v-col
+                v-if="!managedMaterial"
+                cols="auto"
+              >
                 <v-btn
                   :aria-label="$t('actions.generate')"
                   variant="tonal"
@@ -171,7 +181,7 @@
                 </v-btn>
               </v-col>
             </v-row>
-            <v-row v-if="inTls.certificate_provider == undefined && usePath == 0">
+            <v-row v-if="!managedMaterial && inTls.certificate_provider == undefined && usePath == 0">
               <v-col
                 cols="12"
                 sm="6"
@@ -193,7 +203,7 @@
                 />
               </v-col>
             </v-row>
-            <v-row v-else-if="inTls.certificate_provider == undefined">
+            <v-row v-else-if="!managedMaterial && inTls.certificate_provider == undefined">
               <v-col cols="12">
                 <v-textarea
                   v-model="certText"
@@ -209,7 +219,7 @@
                 />
               </v-col>
             </v-row>
-            <v-row>
+            <v-row v-if="!serverOnly">
               <v-col
                 cols="12"
                 sm="6"
@@ -236,9 +246,21 @@
               </v-col>
             </v-row>
           </template>
-          <template v-if="outTls.reality && inTls.reality">
+          <template v-if="inTls.reality && (managedMaterial || outTls.reality)">
             <v-row>
               <v-col
+                v-if="$slots['handshake-source']"
+                cols="12"
+                sm="6"
+                md="4"
+              >
+                <slot
+                  name="handshake-source"
+                  :port="server_port"
+                />
+              </v-col>
+              <v-col
+                v-if="!handshakeFromSource"
                 cols="12"
                 sm="6"
                 md="4"
@@ -263,7 +285,10 @@
                 />
               </v-col>
               <v-spacer />
-              <v-col cols="auto">
+              <v-col
+                v-if="!managedMaterial"
+                cols="auto"
+              >
                 <v-btn
                   :aria-label="$t('actions.generate')"
                   variant="tonal"
@@ -283,21 +308,30 @@
               </v-col>
             </v-row>
             <v-row>
-              <v-col cols="12">
+              <v-col
+                v-if="!managedMaterial"
+                cols="12"
+              >
                 <v-text-field
                   v-model="inTls.reality.private_key"
                   :label="$t('tls.privKey')"
                   hide-details
                 />
               </v-col>
-              <v-col cols="12">
+              <v-col
+                v-if="!managedMaterial && outTls.reality"
+                cols="12"
+              >
                 <v-text-field
                   v-model="outTls.reality.public_key"
                   :label="$t('tls.pubKey')"
                   hide-details
                 />
               </v-col>
-              <v-col cols="12">
+              <v-col
+                v-if="!managedMaterial"
+                cols="12"
+              >
                 <v-text-field
                   v-model="short_id"
                   label="Short IDs"
@@ -384,7 +418,7 @@
                client presents one. Endpoints reuse these when they reference
                this TLS config. Paths and inline text are exclusive, matching
                how the server certificate above is entered. -->
-          <template v-if="optionClientAuth">
+          <template v-if="optionClientAuth && !managedMaterial">
             <v-divider class="my-2" />
             <v-card-subtitle>{{ $t('tls.mutual') }}</v-card-subtitle>
             <v-row>
@@ -510,7 +544,7 @@
               </v-col>
             </v-row>
           </template>
-          <v-row v-if="outTls.utls != undefined">
+          <v-row v-if="!serverOnly && outTls.utls != undefined">
             <v-col
               cols="12"
               sm="6"
@@ -527,7 +561,7 @@
           <!-- Client side only, and refused by reality, so it is offered for
                plain TLS alone. The forged hostname has to differ from the SNI
                above for sing-box to accept it. -->
-          <v-row v-if="tlsType == 0 && outTls.spoof != undefined">
+          <v-row v-if="!serverOnly && tlsType == 0 && outTls.spoof != undefined">
             <v-col
               cols="12"
               sm="6"
@@ -613,7 +647,7 @@
                         hide-details
                       />
                     </v-list-item>
-                    <v-list-item>
+                    <v-list-item v-if="!serverOnly">
                       <v-switch
                         v-model="optionFP"
                         color="primary"
@@ -621,7 +655,7 @@
                         hide-details
                       />
                     </v-list-item>
-                    <v-list-item>
+                    <v-list-item v-if="!managedMaterial">
                       <v-switch
                         v-model="optionClientAuth"
                         color="primary"
@@ -645,7 +679,7 @@
                         hide-details
                       />
                     </v-list-item>
-                    <v-list-item>
+                    <v-list-item v-if="!serverOnly">
                       <v-switch
                         v-model="optionSpoof"
                         color="primary"
@@ -677,7 +711,16 @@
             </v-menu>
           </v-card-actions>
         </v-card>
+        <v-alert
+          v-if="realityTargetError"
+          type="error"
+          variant="tonal"
+          class="mt-3"
+        >
+          {{ realityTargetError }}
+        </v-alert>
         <EchVue
+          v-if="!managedMaterial"
           :i-tls="inTls"
           :o-tls="outTls"
         />
@@ -695,6 +738,7 @@
           color="primary"
           variant="tonal"
           :loading="loading"
+          :disabled="!!realityTargetError"
           @click="saveChanges"
         >
           {{ $t('actions.save') }}
@@ -720,6 +764,16 @@ export default {
     data: { type: String, required: true },
     id: { type: Number, required: true },
     providers: { type: Array as PropType<string[]>, required: true },
+    contextName: { type: String, default: '' },
+    showName: { type: Boolean, default: true },
+    managedMaterial: { type: Boolean, default: false },
+    serverOnly: { type: Boolean, default: false },
+    handshakeFromSource: { type: Boolean, default: false },
+    validateRealityTarget: {
+      type: Function as PropType<(server: string, port: number) => string>,
+      default: undefined,
+    },
+    allowReality: { type: Boolean, default: true },
   },
   emits: ['close', 'save'],
   data() {
@@ -791,6 +845,11 @@ export default {
     },
     outTls(): oTls {
       return this.tls.client
+    },
+    realityTargetError(): string {
+      const handshake = this.inTls.reality?.handshake
+      if (!handshake || !this.inTls.reality?.enabled || !this.validateRealityTarget) return ''
+      return this.validateRealityTarget(handshake.server || '', this.server_port)
     },
     clientCaText: {
       get(): string { return this.inTls.client_certificate ? this.inTls.client_certificate.join('\n') : '' },

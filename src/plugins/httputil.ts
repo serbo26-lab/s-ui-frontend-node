@@ -4,7 +4,9 @@ import router from '@/router'
 import { push } from 'notivue'
 import { clearAuthenticated } from './auth'
 import Data from '@/store/modules/data'
+import Nodes, { invalidateNodesRequests } from '@/features/nodes/state/nodes'
 import axios from 'axios'
+import { nodeErrorCode } from '@/features/nodes/types/nodeErrors'
 import type { AxiosRequestConfig } from 'axios'
 
 // The envelope every endpoint answers with. What rides in `obj` depends on the
@@ -57,7 +59,8 @@ function _handleMsg(msg: unknown): void {
     } else {
       push.error({
         title: i18n.global.t('failed'),
-        message: msg.msg
+        message: i18n.global.te('nodeUI.errors.' + nodeErrorCode(msg.msg))
+          ? i18n.global.t('nodeUI.errors.' + nodeErrorCode(msg.msg)) : msg.msg
       })
     }
   }
@@ -75,6 +78,8 @@ export const logout = async () => {
     // for a moment.
     clearAuthenticated()
     Data().$reset()
+    invalidateNodesRequests()
+    Nodes().$reset()
     router.push('/login')
   }
 }

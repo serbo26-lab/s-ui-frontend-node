@@ -12,6 +12,9 @@ export interface Client {
 	name: string
 	config?: Config
 	inbounds: number[]
+  nodeinbounds?: number[]
+  nodes?: number[]
+  node_migration_required?: boolean
   links?: Link[]
 	volume: number
 	expiry: number
@@ -35,6 +38,8 @@ const defaultClient: Client = {
   name: "",
   config: {},
   inbounds: [],
+  nodeinbounds: [],
+  nodes: [],
   links: [],
   volume: 0,
   expiry: 0,
