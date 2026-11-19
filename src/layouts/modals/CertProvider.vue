@@ -6,7 +6,10 @@
     <v-card class="rounded-lg">
       <v-card-title class="d-flex align-center">
         {{ $t('actions.' + title) + " " + $t('tls.provider.title') }}
-        <span v-if="contextName" class="ms-2 text-body-2">{{ contextName }}</span>
+        <span
+          v-if="contextName"
+          class="ms-2 text-body-2"
+        >{{ contextName }}</span>
         <v-spacer />
         <DocLink section="tls" />
       </v-card-title>
