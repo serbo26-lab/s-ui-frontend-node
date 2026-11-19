@@ -929,6 +929,6 @@ async function saveOverride(entry:SpecEntry){const base=workspace.value?.spec?.e
 async function resetOverride(key:string){await perform(()=>store.save('nodes','setoverrides',{id:selectedId.value,expected_version:selected.value?.settings_version??0,overrides:workspace.value?.overrides.filter(o=>o.connection_key!==key)??[]}))}
 async function retry(){await perform(async()=>{const a=await store.save('nodes','retry',{id:selectedId.value});if(store.resources.domains.some(d=>d.node_id===selectedId.value))await Http.post('api/node-resource-retry',{data:JSON.stringify({node_id:selectedId.value})});return a})}
 let timer:ReturnType<typeof setInterval>|undefined
-onMounted(()=>{refresh();timer=setInterval(()=>{clock.value=Date.now()/1000;refresh()},5000)})
+onMounted(()=>{void refresh();timer=setInterval(()=>{clock.value=Date.now()/1000;void refresh()},5000)})
 onUnmounted(()=>{alive=false;workspaceTicket++;if(timer)clearInterval(timer)})
 </script>

@@ -504,17 +504,9 @@ watch([() => props.visible, () => props.value], ([visible, value]) => {
   tlsOpen.value = false
 }, { immediate: true })
 
-const validation = computed(() => {
-  const { tag, listen_port, type } = form.value
+function validateTLS() {
+  const type = form.value.type
   const server = tlsData.value.server
-  if (!tag.trim()) return t('nodeUI.nameRequired')
-  if (form.value.detour && (!props.detourTargets?.some(item => item.value === form.value.detour) || quicTransport.value)) {
-    return t('nodeUI.errors.invalid_node_detour')
-  }
-  if (!viaRealm.value && form.value.addrs?.some(addr => !isPublishedAddress(addr.server) || !Number.isInteger(addr.server_port) || addr.server_port < 1 || addr.server_port > 65535)) return t('nodes.invalidPublicAddress')
-  if (portMode.value === 'manual' && (!Number.isInteger(listen_port) || listen_port < 1 || listen_port > 65535)) {
-    return t('nodeUI.portInvalid')
-  }
   if (profileId.value) {
     if (props.nodeOverride) return ''
     const profile = props.tlsProfiles.find(row => row.id === profileId.value)
@@ -531,6 +523,19 @@ const validation = computed(() => {
     return t('nodeUI.sniRequired')
   }
   return ''
+}
+
+const validation = computed(() => {
+  const { tag, listen_port } = form.value
+  if (!tag.trim()) return t('nodeUI.nameRequired')
+  if (form.value.detour && (!props.detourTargets?.some(item => item.value === form.value.detour) || quicTransport.value)) {
+    return t('nodeUI.errors.invalid_node_detour')
+  }
+  if (!viaRealm.value && form.value.addrs?.some(addr => !isPublishedAddress(addr.server) || !Number.isInteger(addr.server_port) || addr.server_port < 1 || addr.server_port > 65535)) return t('nodes.invalidPublicAddress')
+  if (portMode.value === 'manual' && (!Number.isInteger(listen_port) || listen_port < 1 || listen_port > 65535)) {
+    return t('nodeUI.portInvalid')
+  }
+  return validateTLS()
 })
 
 function addAddress() {

@@ -33,44 +33,70 @@ export function openEntry(entry:SpecEntry) {
   if (Array.isArray(addresses)) state.form.addrs = addresses
   return state
 }
-export function saveEntry(entry:SpecEntry,form:Inbound,tls:tls,sources:Record<string,ValueSource>):SpecEntry {
-  const data=serializeNodeInbound(form,tls), options=data.options as Record<string,unknown>
-  // Material and credentials belong to the node, never to a shared template.
-  const server=options.tls as Record<string,unknown>
-  for(const key of ['certificate','key','certificate_path','key_path','certificate_provider']) delete server[key]
-  const reality=server.reality as Record<string,unknown>|undefined
-  const next=clone(sources)
+function removeTLSSources(sources: Record<string, ValueSource>, prefix: string) {
+  for (const path of Object.keys(sources)) {
+    if (path.startsWith(prefix)) delete sources[path]
+  }
+}
+
+function prepareTLSOptions(server: Record<string, unknown>, sources: Record<string, ValueSource>) {
+  for (const key of ['certificate','key','certificate_path','key_path','certificate_provider']) delete server[key]
+  const reality = server.reality as Record<string, unknown> | undefined
+  if (server.enabled && reality?.enabled) {
+    const handshake = reality.handshake as Record<string, unknown> | undefined
+    if (handshake && (handshake.server || sources[handshakePath])) handshake.server_port ||= 443
+  } else {
+    removeTLSSources(sources, '/tls/reality/')
+  }
+  if (reality?.enabled) {
+    delete reality.private_key
+    delete reality.short_id
+    delete sources['/tls/certificate_binding']
+    sources['/tls/reality/private_key'] = {kind:'node_generated',purpose:'reality_private_key'}
+    sources['/tls/reality/short_id'] = {kind:'node_generated',purpose:'reality_short_id'}
+  } else {
+    delete server.reality
+    if (server.enabled) sources['/tls/certificate_binding'] = {kind:'node_certificate',name:'primary'}
+  }
+  if (!server.enabled) removeTLSSources(sources, '/tls/')
+}
+
+function prepareServerOptions(form: Inbound, options: Record<string, unknown>, sources: Record<string, ValueSource>) {
+  prepareTLSOptions(options.tls as Record<string, unknown>, sources)
   const obfs = options.obfs as Record<string, unknown> | undefined
   if (form.type === 'hysteria2' && obfs) {
     delete obfs.password
-    next['/obfs/password'] = {kind:'node_generated', purpose:'hysteria2_obfs_password'}
+    sources['/obfs/password'] = {kind:'node_generated', purpose:'hysteria2_obfs_password'}
   } else {
-    delete next['/obfs/password']
+    delete sources['/obfs/password']
   }
   const transport = options.transport as {type?: string} | undefined
-  if (transport?.type !== 'http' && transport?.type !== 'httpupgrade') delete next[hostPath]
-  if (server.enabled && reality?.enabled) {
-    const handshake = reality.handshake as Record<string, unknown> | undefined
-    if (handshake && (handshake.server || next[handshakePath])) handshake.server_port ||= 443
-  } else {
-    for (const path of Object.keys(next)) if (path.startsWith('/tls/reality/')) delete next[path]
-  }
-  if(reality?.enabled){delete reality.private_key;delete reality.short_id;delete next['/tls/certificate_binding'];next['/tls/reality/private_key']={kind:'node_generated',purpose:'reality_private_key'};next['/tls/reality/short_id']={kind:'node_generated',purpose:'reality_short_id'}}
-  else {delete server.reality;delete next['/tls/reality/private_key'];delete next['/tls/reality/short_id'];if(server.enabled)next['/tls/certificate_binding']={kind:'node_certificate',name:'primary'}}
-  if(!server.enabled){for(const path of Object.keys(next))if(path.startsWith('/tls/'))delete next[path]}
+  if (transport?.type !== 'http' && transport?.type !== 'httpupgrade') delete sources[hostPath]
   if (!nodeSupportsTLS(form.type)) delete options.tls
   if (form.type === 'shadowsocks' || form.type === 'shadowtls') delete options.password
   if (form.type === 'snell') delete options.psk
-  if(next['/listen_port'])delete options.listen_port
-  const client=clone(tls.client) as Record<string,unknown>
-  delete client.reality
-  const clientOptions = clone(form.out_json ?? {})
-  if (form.addrs?.length && !options.realm) clientOptions.addresses = clone(form.addrs)
-  if (!options.realm) delete clientOptions.realm
-  else {
-    delete clientOptions.server_ports
-    delete clientOptions.hop_interval
+  if (sources['/listen_port']) delete options.listen_port
+}
+
+function prepareClientOptions(form: Inbound, viaRealm: boolean) {
+  const options = clone(form.out_json ?? {})
+  if (form.addrs?.length && !viaRealm) options.addresses = clone(form.addrs)
+  if (viaRealm) {
+    delete options.server_ports
+    delete options.hop_interval
+  } else {
+    delete options.realm
   }
+  return options
+}
+
+export function saveEntry(entry: SpecEntry, form: Inbound, tls: tls, sources: Record<string, ValueSource>): SpecEntry {
+  const { options } = serializeNodeInbound(form, tls)
+  const next = clone(sources)
+  prepareServerOptions(form, options, next)
+  const client = clone(tls.client) as Record<string, unknown>
+  delete client.reality
+  const clientOptions = prepareClientOptions(form, Boolean(options.realm))
   return {
     connection_key:entry.connection_key,name:form.tag.trim(),protocol:form.type as SpecEntry['protocol'],
     enable:form.enable!==false,options,sources:next,client_tls:client,

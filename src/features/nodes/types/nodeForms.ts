@@ -8,9 +8,9 @@ export function isPublishedAddress(value: string): boolean {
   try {
     if (value.includes(':')) {
       const bare=value.startsWith('[')&&value.endsWith(']')?value.slice(1,-1):value
-      return new URL('http://['+bare+']/').hostname.startsWith('[')
+      return new URL('https://['+bare+']/').hostname.startsWith('[')
     }
-    const hostname=new URL('http://'+value).hostname
+    const hostname=new URL('https://'+value).hostname
     const name=hostname.endsWith('.')?hostname.slice(0,-1):hostname
     return name.length<=253 && name.split('.').every(label=>label.length>0&&label.length<=63&&/^[a-z0-9](?:[a-z0-9-]*[a-z0-9])?$/i.test(label))
   } catch {return false}

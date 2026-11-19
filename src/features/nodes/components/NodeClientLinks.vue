@@ -77,6 +77,6 @@ async function load() {
   catch {if(requestVersion===version)failed.value=true}
   finally {if(requestVersion===version)loading.value=false}
 }
-watch(()=>[props.clientId,props.active],()=>{version++;if(timer)clearInterval(timer);links.value=[];failed.value=false;loading.value=false;if(props.active&&props.clientId>0){load();timer=setInterval(load,5000)}},{immediate:true})
+watch(()=>[props.clientId,props.active],()=>{version++;if(timer)clearInterval(timer);links.value=[];failed.value=false;loading.value=false;if(props.active&&props.clientId>0){void load();timer=setInterval(()=>void load(),5000)}},{immediate:true})
 onUnmounted(()=>{version++;if(timer)clearInterval(timer)})
 </script>

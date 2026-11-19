@@ -28,14 +28,37 @@ export default defineStore('Nodes', {
     resourcesFailed: false,
   }),
   actions: {
-    async provision(request:NodeProvisionRequest):Promise<NodeJob|undefined>{
-      this.writeEpoch++;this.writes++;this.lastSaveError='';const session=requestSession
-      let job:NodeJob|undefined
-      try{const r=await HttpUtils.post<NodeJob>('api/node-provision',{data:JSON.stringify(request)});if(session===requestSession){if(r.success)job=r.obj;else this.lastSaveError=r.msg}}
-      catch{if(session===requestSession)this.lastSaveError=i18n.global.t('nodes.saveFailed')}
-      finally{if(session===requestSession)this.writes=Math.max(0,this.writes-1)}
-      if(session===requestSession){const epoch=this.writeEpoch;try{const bundle=await HttpUtils.get<NodesBundle>('api/nodes');if(session===requestSession&&epoch===this.writeEpoch&&!this.writes){if(bundle.success)this.setBundle(bundle.obj);else this.failed=true}}catch{if(session===requestSession)this.failed=true}}
-      return session===requestSession?job:undefined
+    async provision(request: NodeProvisionRequest): Promise<NodeJob | undefined> {
+      this.writeEpoch++
+      this.writes++
+      this.lastSaveError = ''
+      const session = requestSession
+      let job: NodeJob | undefined
+      try {
+        const result = await HttpUtils.post<NodeJob>('api/node-provision', { data: JSON.stringify(request) })
+        if (session !== requestSession) return
+        if (result.success) job = result.obj
+        else this.lastSaveError = result.msg
+      } catch {
+        if (session !== requestSession) return
+        this.lastSaveError = i18n.global.t('nodes.saveFailed')
+      } finally {
+        if (session === requestSession) this.writes = Math.max(0, this.writes - 1)
+      }
+      if (session !== requestSession) return
+      await this.refreshAfterProvision(session)
+      return session === requestSession ? job : undefined
+    },
+    async refreshAfterProvision(session: number) {
+      const epoch = this.writeEpoch
+      try {
+        const bundle = await HttpUtils.get<NodesBundle>('api/nodes')
+        if (session !== requestSession || epoch !== this.writeEpoch || this.writes) return
+        if (bundle.success) this.setBundle(bundle.obj)
+        else this.failed = true
+      } catch {
+        if (session === requestSession) this.failed = true
+      }
     },
     setBundle(bundle: NodesBundle) {
       this.nodes = bundle.nodes
