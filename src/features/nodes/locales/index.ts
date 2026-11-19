@@ -1,16 +1,4 @@
-import { nodesEnglish, nodesRussian } from './nodes'
-import { nodeUIEnglish, nodeUIRussian } from './nodeUI'
-import { onboardingEnglish, onboardingRussian } from './nodeOnboarding'
+import en from './en.json'
+import ru from './ru.json'
 
-export const nodeMessages = {
-  en: {
-    nodes: nodesEnglish,
-    nodeOnboarding: onboardingEnglish,
-    nodeUI: { ...nodeUIEnglish, errors: { ...nodeUIEnglish.errors, ...onboardingEnglish.errors } },
-  },
-  ru: {
-    nodes: nodesRussian,
-    nodeOnboarding: onboardingRussian,
-    nodeUI: { ...nodeUIRussian, errors: { ...nodeUIRussian.errors, ...onboardingRussian.errors } },
-  },
-}
+export const nodeMessages = { en, ru }
