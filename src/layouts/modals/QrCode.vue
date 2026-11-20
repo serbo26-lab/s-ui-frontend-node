@@ -84,6 +84,21 @@
                   style="border-radius: 1rem; cursor: copy;"
                   @click="copyToClipboard(clientSub + '?format=clash')"
                 />
+                <div class="d-flex justify-center flex-wrap ga-2">
+                  <v-btn
+                    variant="text"
+                    @click="copyToClipboard(clientSub+'?format=clash')"
+                  >
+                    {{ $t('nodeUI.copyClash') }}
+                  </v-btn><v-btn
+                    variant="text"
+                    :href="clientSub+'?format=clash'"
+                    target="_blank"
+                    rel="noopener"
+                  >
+                    {{ $t('nodeUI.openClash') }}
+                  </v-btn>
+                </div>
               </v-col>
             </v-row>
             <v-row>
@@ -97,8 +112,26 @@
                 />
               </v-col>
             </v-row>
+            <v-row>
+              <v-col style="text-align: center;">
+                <v-chip>HAPP (scan only)</v-chip><br>
+                <QrcodeVue
+                  :value="happ"
+                  :size="size"
+                  :margin="1"
+                  style="border-radius: .8rem; cursor: not-allowed;"
+                />
+              </v-col>
+            </v-row>
           </v-window-item>
           <v-window-item value="link">
+            <NodeClientLinks
+              v-if="client.nodes?.length || client.nodeinbounds?.length"
+              :client-id="id"
+              :active="visible && tab === 'link'"
+              qr
+              @copy="copyToClipboard"
+            />
             <v-row
               v-for="(l, index) in clientLinks"
               :key="index"
@@ -123,6 +156,7 @@
 
 <script lang="ts">
 import QrcodeVue from 'qrcode.vue'
+import NodeClientLinks from '@/features/nodes/components/NodeClientLinks.vue'
 import Data from '@/store/modules/data'
 import Clipboard from 'clipboard'
 import { i18n } from '@/locales'
@@ -130,7 +164,7 @@ import { push } from 'notivue'
 import { Client } from '@/types/clients'
 
 export default {
-  components: { QrcodeVue },
+  components: { QrcodeVue, NodeClientLinks },
   props: {
     id: { type: Number, required: true },
     visible: { type: Boolean, required: true },
@@ -150,6 +184,10 @@ export default {
     singbox() {
       const url = Data().subURI + this.client.name + "?format=json"
       return "sing-box://import-remote-profile?url=" +  encodeURIComponent(url) + "#" + this.client.name
+    },
+    // Happ takes the subscription URL as it is, unencoded, after happ://add/.
+    happ() {
+      return "happ://add/" + this.clientSub + "?format=happ"
     },
     clientLinks() {
       return this.client.links?? []
@@ -175,7 +213,16 @@ export default {
       this.client = newData
       this.loading = false
     },
-    copyToClipboard(txt:string) {
+    async copyToClipboard(txt:string) {
+      if (navigator.clipboard?.writeText) {
+        try {
+          await navigator.clipboard.writeText(txt)
+          push.success({ message: i18n.global.t('success') + ": " + i18n.global.t('copyToClipboard'), duration: 5000 })
+          return
+        } catch {
+          // Older browsers and restricted contexts use the existing fallback.
+        }
+      }
       const hiddenButton = document.createElement('button')
       hiddenButton.className = 'clipboard-btn'
       document.body.appendChild(hiddenButton)

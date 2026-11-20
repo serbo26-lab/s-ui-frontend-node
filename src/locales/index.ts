@@ -5,18 +5,19 @@ import vi from './vi'
 import zhcn from './zhcn'
 import zhtw from './zhtw'
 import ru from './ru'
+import { nodeMessages } from '@/features/nodes/locales'
 
 export const i18n = createI18n({
   legacy: false,
   locale: localStorage.getItem("locale") ?? 'en',
   fallbackLocale: 'en',
   messages: {
-    en: en,
+    en: { ...en, ...nodeMessages.en },
     fa: fa,
     vi: vi,
     zhHans: zhcn,
     zhHant: zhtw,
-    ru: ru
+    ru: { ...ru, ...nodeMessages.ru },
   },
 })
 

@@ -276,6 +276,25 @@
                   </v-select>
                 </v-col>
               </v-row>
+              <v-row>
+                <v-col>
+                  <NodeInboundSelect
+                    v-if="client.node_migration_required"
+                    :model-value="client.nodeinbounds ?? []"
+                    readonly
+                  />
+                  <NodeSelect
+                    v-else
+                    v-model="clientNodes"
+                  />
+                  <p
+                    v-if="client.node_migration_required"
+                    class="text-body-2 my-2"
+                  >
+                    {{ $t('nodeUI.legacyAssignment') }}
+                  </p>
+                </v-col>
+              </v-row>
             </v-window-item>
             <v-window-item value="t2">
               <v-row>
@@ -345,6 +364,11 @@
               </v-row>
             </v-window-item>
             <v-window-item value="t3">
+              <NodeClientLinks
+                v-if="client.nodes?.length || client.nodeinbounds?.length"
+                :client-id="id"
+                :active="visible && tab === 't3'"
+              />
               <v-row
                 v-for="(lnk, index) in links"
                 :key="index"
@@ -439,6 +463,9 @@ import { HumanReadable } from '@/plugins/utils'
 import Data from '@/store/modules/data'
 import { locale } from '@/locales'
 import type { PropType } from 'vue'
+import NodeSelect from '@/features/nodes/components/NodeSelect.vue'
+import NodeInboundSelect from '@/features/nodes/components/NodeInboundSelect.vue'
+import NodeClientLinks from '@/features/nodes/components/NodeClientLinks.vue'
 
 // The per-protocol credentials of a client. The type is internal to
 // @/types/clients, so it is taken from what builds one.
@@ -451,7 +478,7 @@ interface InboundTag {
 }
 
 export default {
-  components: { DatePick },
+  components: { DatePick, NodeSelect, NodeInboundSelect, NodeClientLinks },
   props: {
     visible: { type: Boolean, required: true },
     id: { type: Number, required: true },
@@ -472,6 +499,10 @@ export default {
     }
   },
   computed: {
+    clientNodes: {
+      get(): number[] { return this.client.nodes ?? [] },
+      set(value: number[]) { this.client.nodes = [...value].sort((a, b) => a - b) },
+    },
     clientInbounds: {
       get() { return this.client.inbounds.length>0 ? [...this.client.inbounds].sort() : [] },
       set(v:number[]) { this.client.inbounds = v.length == 0 ?  [] : v.sort() }
@@ -571,7 +602,10 @@ export default {
       this.client.links = [
                         ...this.extLinks.filter(l => l.uri != ''),
                         ...this.subLinks.filter(l => l.uri != '')]
-      const success = await Data().save("clients", this.$props.id == 0 ? "new" : "edit", this.client)
+      const payload = { ...this.client }
+      if (payload.node_migration_required) delete payload.nodes
+      else delete payload.nodeinbounds
+      const success = await Data().save("clients", this.$props.id == 0 ? "new" : "edit", payload)
       if (success) this.closeModal()
       this.loading = false
     },
