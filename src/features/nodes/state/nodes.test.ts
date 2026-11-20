@@ -1,9 +1,14 @@
 import { beforeEach, expect, it, vi } from 'vitest'
 import { createPinia, setActivePinia } from 'pinia'
-import Nodes, { invalidateNodesRequests } from './nodes'
-import HttpUtils from '@/plugins/httputil'
+import Nodes from './nodes'
+import HttpUtils, { registerHttpHooks } from '@/plugins/httputil'
+import { registerNodeHttpHooks } from '@/features/nodes/integration'
+import { i18n } from '@/locales'
 import type { NodesBundle } from '@/features/nodes/types/nodes'
-vi.mock('@/plugins/httputil', () => ({ default: { get: vi.fn(), post: vi.fn() } }))
+vi.mock('@/plugins/httputil', () => ({
+  default: { get: vi.fn(), post: vi.fn() },
+  registerHttpHooks: vi.fn(),
+}))
 vi.mock('notivue', () => ({ push: { success: vi.fn() } }))
 beforeEach(() => { setActivePinia(createPinia()); vi.clearAllMocks() })
 const empty: NodesBundle = { nodes: [], nodetemplates: [], nodeinbounds: [] }
@@ -30,8 +35,18 @@ it('does not restore a previous account response after logout/reset', async () =
   let finish: (value: {success:boolean,msg:string,obj:NodesBundle})=>void = () => {}
   vi.mocked(HttpUtils.get).mockImplementation(() => new Promise(resolve => { finish = resolve }))
   const store=Nodes(), poll=store.load()
-  invalidateNodesRequests();store.$reset()
+  registerNodeHttpHooks()
+  vi.mocked(registerHttpHooks).mock.calls[0][0].onLogout?.()
   finish({success:true,msg:'',obj:{...empty,nodetemplates:[{id:1,name:'previous-account',config:{}}]}});await poll
   expect(store.loaded).toBe(false)
   expect(store.templates).toEqual([])
+})
+
+it('localizes node errors through the registered HTTP hook', () => {
+  registerNodeHttpHooks()
+  const { errorMessage } = vi.mocked(registerHttpHooks).mock.calls[0][0]
+  expect(errorMessage?.('save Nodes: template_version_conflict')).toBe(
+    i18n.global.t('nodeUI.errors.template_version_conflict'),
+  )
+  expect(errorMessage?.('Unexpected response')).toBeUndefined()
 })

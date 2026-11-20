@@ -4,10 +4,19 @@ import router from '@/router'
 import { push } from 'notivue'
 import { clearAuthenticated } from './auth'
 import Data from '@/store/modules/data'
-import Nodes, { invalidateNodesRequests } from '@/features/nodes/state/nodes'
 import axios from 'axios'
-import { nodeErrorCode } from '@/features/nodes/types/nodeErrors'
 import type { AxiosRequestConfig } from 'axios'
+
+interface HttpHooks {
+  onLogout?: () => void
+  errorMessage?: (message: string) => string | undefined
+}
+
+let httpHooks: HttpHooks = {}
+
+export function registerHttpHooks(hooks: HttpHooks): void {
+  httpHooks = hooks
+}
 
 // The envelope every endpoint answers with. What rides in `obj` depends on the
 // endpoint, so it is unknown until a caller names it: HttpUtils.get<Foo>(url).
@@ -59,8 +68,7 @@ function _handleMsg(msg: unknown): void {
     } else {
       push.error({
         title: i18n.global.t('failed'),
-        message: i18n.global.te('nodeUI.errors.' + nodeErrorCode(msg.msg))
-          ? i18n.global.t('nodeUI.errors.' + nodeErrorCode(msg.msg)) : msg.msg
+        message: httpHooks.errorMessage?.(msg.msg) ?? msg.msg
       })
     }
   }
@@ -78,8 +86,7 @@ export const logout = async () => {
     // for a moment.
     clearAuthenticated()
     Data().$reset()
-    invalidateNodesRequests()
-    Nodes().$reset()
+    httpHooks.onLogout?.()
     router.push('/login')
   }
 }
