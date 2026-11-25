@@ -126,27 +126,27 @@
           </v-window-item>
           <v-window-item value="link">
             <NodeClientLinks
-              v-if="client.nodes?.length || client.nodeinbounds?.length"
+              v-slot="{ links: displayedLinks }"
               :client-id="id"
-              :active="visible && tab === 'link'"
-              qr
-              @copy="copyToClipboard"
-            />
-            <v-row
-              v-for="(l, index) in clientLinks"
-              :key="index"
+              :active="visible && tab === 'link' && !!(client.nodes?.length || client.nodeinbounds?.length)"
+              :local-links="clientLinks"
             >
-              <v-col style="text-align: center;">
-                <v-chip>{{ l.remark?? $t('client.' + l.type) }}</v-chip><br>
-                <QrcodeVue
-                  :value="l.uri"
-                  :size="size"
-                  :margin="1"
-                  style="border-radius: .5rem; cursor: copy;"
-                  @click="copyToClipboard(l.uri)"
-                />
-              </v-col>
-            </v-row>
+              <v-row
+                v-for="(l, index) in displayedLinks"
+                :key="index"
+              >
+                <v-col style="text-align: center;">
+                  <v-chip>{{ l.remark?? $t('client.' + l.type) }}</v-chip><br>
+                  <QrcodeVue
+                    :value="l.uri"
+                    :size="size"
+                    :margin="1"
+                    style="border-radius: .5rem; cursor: copy;"
+                    @click="copyToClipboard(l.uri)"
+                  />
+                </v-col>
+              </v-row>
+            </NodeClientLinks>
           </v-window-item>
         </v-window>
       </v-card-text>

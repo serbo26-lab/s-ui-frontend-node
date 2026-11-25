@@ -1,42 +1,63 @@
 <template>
-  <div
-    v-if="report?.certificates?.length"
-    class="mb-4"
-  >
-    <p class="text-subtitle-2">
-      {{ $t('nodes.certificates') }}
-    </p>
-    <p class="text-caption text-medium-emphasis mb-2">
-      {{ new Date(report.observed_at*1000).toLocaleString() }} · {{ $t('nodeUI.version') }} {{ report.revision }}
-    </p>
-    <v-list density="compact">
+  <template v-if="report?.certificates?.length">
+    <v-divider />
+    <v-list
+      density="compact"
+      class="pa-0"
+      :aria-label="$t('nodes.certificates')"
+    >
+      <v-list-subheader class="px-0">
+        {{ $t('nodes.certificates') }}
+      </v-list-subheader>
       <v-list-item
         v-for="item in report.certificates"
         :key="item.inbound"
+        class="px-0 py-1"
       >
-        <p class="text-caption text-medium-emphasis">
-          {{ inboundLabel(item.inbound) }}
-        </p>
-        <div class="d-flex align-center flex-wrap ga-2">
-          <span class="text-break">{{ item.server_name || item.inbound }}</span><v-chip
-            size="small"
-            :color="item.state==='ready'?'success':'warning'"
+        <v-row
+          no-gutters
+          class="text-body-2"
+        >
+          <v-col
+            cols="12"
+            sm="5"
+            class="text-break"
           >
-            {{ $t('nodes.certificateStates.'+item.state) }}
-          </v-chip><small v-if="item.provider">{{ item.provider }}</small>
-        </div>
-        <small v-if="item.not_after">{{ $t('nodes.validUntil') }}: {{ new Date(item.not_after*1000).toLocaleString() }}</small>
-        <small
-          v-if="item.sha256 && !compact"
-          class="d-block text-medium-emphasis"
-          style="overflow-wrap:anywhere"
-        >SHA256 {{ item.sha256 }}</small>
+            {{ inboundName(item.inbound) }}
+          </v-col>
+          <v-col class="text-break">
+            {{ $t('nodes.certificateStates.' + item.state) }}
+            <span
+              v-if="item.server_name"
+              class="ms-2 text-medium-emphasis"
+            >{{ item.server_name }}</span>
+          </v-col>
+        </v-row>
+        <v-row
+          v-if="item.not_after"
+          no-gutters
+          class="text-caption text-medium-emphasis"
+        >
+          <v-col
+            cols="12"
+            sm="5"
+          >
+            {{ $t('nodes.validUntil') }}
+          </v-col>
+          <v-col>{{ new Date(item.not_after * 1000).toLocaleString() }}</v-col>
+        </v-row>
       </v-list-item>
     </v-list>
-  </div>
+  </template>
 </template>
+
 <script setup lang="ts">
-import type { NodeRecord,NodeInbound } from '@/features/nodes/types/nodes'
-const props=defineProps<{report:NodeRecord['tls_status'],inbounds?:NodeInbound[],nodeId?:number,compact?:boolean}>()
-function inboundLabel(tag:string){const inbound=props.inbounds?.find(value=>tag===`node-${props.nodeId}-inbound-${value.id}`);return inbound?`${inbound.display_name||inbound.tag} · ${inbound.type} · ${inbound.options.listen_port}`:tag}
+import type { NodeInbound, NodeRecord } from '@/features/nodes/types/nodes'
+
+const props = defineProps<{ report: NodeRecord['tls_status'], inbounds: NodeInbound[], nodeId: number }>()
+
+function inboundName(tag: string) {
+  const inbound = props.inbounds.find(value => tag === `node-${props.nodeId}-inbound-${value.id}`)
+  return inbound?.display_name || inbound?.tag || tag
+}
 </script>

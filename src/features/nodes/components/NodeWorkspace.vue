@@ -252,12 +252,6 @@
           </NodeCard>
         </v-col>
       </v-row>
-      <p
-        v-if="store.loaded&&!store.nodes.length&&!store.loading"
-        class="text-body-2 text-center my-6"
-      >
-        {{ $t('nodeUI.emptyNodes') }}
-      </p>
       <v-dialog
         v-if="selected"
         v-model="detailOpen"
@@ -329,6 +323,7 @@
                   >
                     {{ message(waitingFor) }}
                     <v-btn
+                      v-if="waitingFor === 'node_domain_not_ready' || waitingFor === 'node_certificate_not_ready'"
                       variant="text"
                       @click="resourceOpen=true"
                     >
@@ -344,25 +339,45 @@
                     chips
                     closable-chips
                   />
-                  <v-btn
-                    color="primary"
-                    variant="tonal"
-                    class="mt-3"
-                    :disabled="busy||selectedInstalling||!selectionChanged||!selectedInboundIds.length"
-                    @click="applyInbounds"
-                  >
-                    {{ $t('actions.apply') }}
-                  </v-btn>
                   <v-list
-                    class="mt-3"
-                    lines="two"
+                    v-if="workspace?.spec?.entries.length"
+                    class="mt-2 pa-0"
+                    density="compact"
                   >
                     <v-list-item
-                      v-for="entry in workspace?.spec?.entries??[]"
+                      v-for="entry in workspace.spec.entries"
                       :key="entry.connection_key"
                       :title="entry.name"
-                      :subtitle="connectionSubtitle(entry)"
+                      class="px-0 py-2"
                     >
+                      <v-row
+                        no-gutters
+                        class="text-body-2"
+                      >
+                        <v-col cols="4">
+                          {{ $t('type') }}
+                        </v-col>
+                        <v-col>{{ entry.protocol.toUpperCase() }}</v-col>
+                      </v-row>
+                      <v-row
+                        no-gutters
+                        class="text-body-2"
+                      >
+                        <v-col cols="4">
+                          {{ $t('in.port') }}
+                        </v-col>
+                        <v-col>{{ connectionPort(entry.connection_key) ?? '—' }}</v-col>
+                      </v-row>
+                      <v-row
+                        v-if="!entry.enable"
+                        no-gutters
+                        class="text-body-2"
+                      >
+                        <v-col cols="4">
+                          {{ $t('nodes.status') }}
+                        </v-col>
+                        <v-col>{{ $t('nodeUI.off') }}</v-col>
+                      </v-row>
                       <template #append>
                         <v-btn
                           icon="mdi-file-edit"
@@ -397,20 +412,37 @@
                   </v-list>
                 </v-window-item>
                 <v-window-item value="server">
-                  <v-list>
+                  <v-list
+                    density="compact"
+                    class="pa-0"
+                  >
                     <v-list-item
-                      :title="$t('nodeUI.domainTLS')"
-                      :subtitle="selected.linkaddress"
+                      append-icon="mdi-chevron-right"
                       @click="resourceOpen=true"
-                    />
+                    >
+                      <v-row no-gutters>
+                        <v-col
+                          cols="12"
+                          sm="5"
+                        >
+                          {{ $t('nodeUI.domainTLS') }}
+                        </v-col>
+                        <v-col class="text-break">
+                          {{ selected.linkaddress || '—' }}
+                        </v-col>
+                      </v-row>
+                    </v-list-item>
                     <template v-if="store.installations.some(i=>i.node_id===selectedId)">
+                      <v-divider />
                       <v-list-item
                         :title="$t('nodeOnboarding.access')"
+                        append-icon="mdi-chevron-right"
                         :disabled="busy||selectedInstalling"
                         @click="openHost(selected)"
                       />
                       <v-list-item
                         :title="$t('nodeOnboarding.recover')"
+                        append-icon="mdi-chevron-right"
                         :disabled="busy||selectedInstalling"
                         @click="openHost(selected,true)"
                       />
@@ -418,34 +450,36 @@
                   </v-list>
                 </v-window-item>
                 <v-window-item value="status">
-                  <v-list density="compact">
-                    <v-list-item
-                      :title="$t('nodeUI.structure')"
-                      :subtitle="selected.applied_revision+' / '+selected.desired_revision"
-                    />
-                    <v-list-item
-                      :title="$t('nodeUI.access')"
-                      :subtitle="(access?.applied_revision??0)+' / '+(access?.desired_revision??0)"
-                    />
-                    <v-list-item
-                      v-if="waitingFor"
-                      :title="message(waitingFor)"
-                    />
-                  </v-list>
-                  <v-btn
-                    color="primary"
-                    variant="outlined"
-                    :disabled="busy||selectedInstalling"
-                    @click="retry"
+                  <v-alert
+                    v-if="waitingFor && !selectedProblems.length"
+                    type="info"
+                    variant="tonal"
+                    density="compact"
+                    class="mb-3"
                   >
-                    {{ $t('nodes.retryApply') }}
-                  </v-btn>
+                    {{ message(waitingFor) }}
+                  </v-alert>
+                  <NodeOperationStatus
+                    :node="selected"
+                    :task="structureTask"
+                    :access="access"
+                    :domain="selectedDomain"
+                    :certificate="selectedCertificate"
+                  />
                   <v-expansion-panels
                     v-if="latestJob"
                     variant="accordion"
                     class="my-3"
                   >
-                    <v-expansion-panel :title="$t('nodeOnboarding.progress')+' · '+$t('nodeOnboarding.stages.'+latestJob.stage)">
+                    <v-expansion-panel>
+                      <v-expansion-panel-title>
+                        <v-row no-gutters>
+                          <v-col cols="6">
+                            {{ $t('nodeOnboarding.progress') }}
+                          </v-col>
+                          <v-col>{{ $t('nodeOnboarding.stages.'+latestJob.stage) }}</v-col>
+                        </v-row>
+                      </v-expansion-panel-title>
                       <v-expansion-panel-text>
                         <v-progress-linear
                           v-if="selectedInstalling"
@@ -461,36 +495,36 @@
                         >
                           {{ $t('nodeOnboarding.retry') }}
                         </v-btn>
-                        <p
+                        <v-row
                           v-for="(event,i) in jobStages"
                           :key="i"
-                          class="text-body-2"
+                          no-gutters
+                          class="text-body-2 py-1"
                         >
-                          {{ new Date(event.time*1000).toLocaleTimeString() }} · {{ $t('nodeOnboarding.stages.'+event.stage) }}<span v-if="event.error"> · {{ message(event.error) }}</span>
-                        </p>
+                          <v-col
+                            cols="4"
+                            sm="3"
+                          >
+                            {{ new Date(event.time*1000).toLocaleTimeString() }}
+                          </v-col>
+                          <v-col>
+                            {{ $t('nodeOnboarding.stages.'+event.stage) }}
+                            <div
+                              v-if="event.error"
+                              class="text-error"
+                            >
+                              {{ message(event.error) }}
+                            </div>
+                          </v-col>
+                        </v-row>
                       </v-expansion-panel-text>
                     </v-expansion-panel>
                   </v-expansion-panels>
                   <NodeCertificateState
-                    compact
                     :report="selected.tls_status"
                     :inbounds="store.inbounds.filter(i=>i.node_id===selectedId)"
                     :node-id="selectedId"
                   />
-                  <v-list
-                    v-if="selected.sing_box_version || selected.agent_upgrade_state"
-                    density="compact"
-                  >
-                    <v-list-item
-                      title="sing-box"
-                      :subtitle="selected.sing_box_version || '—'"
-                    />
-                    <v-list-item
-                      v-if="selected.agent_upgrade_state && selected.agent_upgrade_state !== 'ready'"
-                      :title="$t('nodeUI.agentUpdate')"
-                      :subtitle="$t('nodeUI.agentUpdates.' + selected.agent_upgrade_state)"
-                    />
-                  </v-list>
                 </v-window-item>
               </v-window>
               <p
@@ -509,6 +543,24 @@
               @click="detailOpen=false"
             >
               {{ $t('actions.close') }}
+            </v-btn>
+            <v-btn
+              v-if="isLiveNode && detailTab === 'inbounds'"
+              color="primary"
+              variant="tonal"
+              :disabled="busy || selectedInstalling || !selectionChanged"
+              @click="applyInbounds"
+            >
+              {{ $t('actions.apply') }}
+            </v-btn>
+            <v-btn
+              v-if="isLiveNode && detailTab === 'status' && canRetry"
+              color="primary"
+              variant="tonal"
+              :disabled="busy || selectedInstalling"
+              @click="retry"
+            >
+              {{ $t('nodes.retryApply') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -674,12 +726,7 @@
             </template>
           </NodeCard>
         </v-col>
-      </v-row><p
-        v-if="!store.resources.dnsprofiles.length"
-        class="text-body-2 my-4"
-      >
-        {{ $t('nodeUI.emptyProfiles') }}
-      </p>
+      </v-row>
     </template>
   </div>
 </template>
@@ -696,6 +743,7 @@ import {clone,inboundTemplateTitle,overrideFromEntry,setPath} from '@/features/n
 import {nodeStatus} from '@/features/nodes/types/nodeForms'
 import NodeHostSetup from '@/features/nodes/dialogs/NodeHostSetup.vue'
 import NodeCertificateState from './NodeCertificateState.vue'
+import NodeOperationStatus from './NodeOperationStatus.vue'
 import NodeCard from './NodeCard.vue'
 import NodeLiveTemplate from '@/features/nodes/dialogs/NodeLiveTemplate.vue'
 import NodeDNSProfile from '@/features/nodes/dialogs/NodeDNSProfile.vue'
@@ -732,7 +780,7 @@ const selectedProblems = computed(() => {
   const domain = domainError(selectedId.value)
   const certificate = certificateError(selectedId.value)
   const node = selected.value?.last_error
-  const task = workspace.value?.tasks.find(task=>task.kind==='structure'&&task.state!=='waiting')?.last_error
+  const task = structureTask.value?.state !== 'waiting' ? structureTask.value?.last_error : undefined
   const structural = node || task
   const accessError = access.value?.last_error
   return [
@@ -761,6 +809,9 @@ const dnsCleanupErrors = new Set([
 ])
 const selected=computed(()=>store.nodes.find(n=>n.id===selectedId.value))
 const access=computed(()=>store.nodeaccess.find(a=>a.node_id===selectedId.value))
+const selectedDomain = computed(() => store.resources.domains.find(domain => domain.node_id === selectedId.value))
+const selectedCertificate = computed(() => store.resources.certificates.find(certificate => certificate.node_id === selectedId.value))
+const structureTask = computed(() => workspace.value?.tasks.find(task => task.kind === 'structure'))
 const isLiveNode=computed(()=>selected.value?.assignment_mode==='node'&&selected.value.agent_protocol===2)
 const catalog=computed(()=>store.templates.filter(template=>template.kind==='inbound'))
 const availableInbounds=computed(()=>catalog.value.filter(template=>template.scope!=='private'||template.owner_node_id===selectedId.value)
@@ -776,14 +827,12 @@ const detourTargets = computed(() => (workspace.value?.spec?.entries ?? [])
     return (transport as {type?: string} | undefined)?.type !== 'quic'
   })
   .map(entry => ({title: entry.name, value: entry.connection_key})))
-const waitingFor=computed(()=>workspace.value?.tasks.find(task=>task.kind==='structure'&&task.state==='waiting')?.last_error)
+const waitingFor = computed(() => structureTask.value?.state === 'waiting' ? structureTask.value.last_error : undefined)
+const canRetry = computed(() => !!(selectedProblems.value.length || waitingFor.value))
 function message(raw:string){const code=nodeErrorCode(raw);return te('nodeUI.errors.'+code)?t('nodeUI.errors.'+code):t('nodeUI.operationFailed')+' ('+code+')'}
 function entryOverrides(key:string){return workspace.value?.overrides.filter(o=>o.connection_key===key)??[]}
-function connectionSubtitle(entry: SpecEntry) {
-  const connection=workspace.value?.connections.find(value=>value.connection_key===entry.connection_key)
-  const port=connection?.options.listen_port
-  const protocol=entry.protocol.toUpperCase()
-  return [entry.name.toUpperCase()===protocol ? '' : protocol, port ? t('in.port')+' '+port : '', entry.enable ? '' : t('nodeUI.off')].filter(Boolean).join(' · ')
+function connectionPort(key: string) {
+  return workspace.value?.connections.find(connection => connection.connection_key === key && !connection.retired)?.options.listen_port
 }
 async function loadWorkspace(){if(!alive||!detailOpen.value||!selectedId.value)return;const id=selectedId.value,ticket=++workspaceTicket;try{const r=await Http.get<Workspace>('api/node-workspace',{id});if(alive&&ticket===workspaceTicket){if(r.success){for(const entry of r.obj.spec?.entries??[])entry.sources??={};workspace.value=r.obj;workspaceFailed.value=false}else workspaceFailed.value=true}}catch{if(alive&&ticket===workspaceTicket)workspaceFailed.value=true}}
 async function refresh(){await Promise.all([store.load(),store.loadResources()]);if(!busy.value&&!overrideOpen.value)await loadWorkspace()}

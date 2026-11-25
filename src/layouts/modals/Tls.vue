@@ -47,8 +47,13 @@
             </v-col>
           </v-row>
           <v-row>
+            <slot
+              v-if="$slots['server-name']"
+              name="server-name"
+              :server="inTls"
+            />
             <v-col
-              v-if="!managedMaterial && inTls.server_name != undefined"
+              v-else-if="!managedMaterial && inTls.server_name != undefined"
               cols="12"
               sm="6"
               md="4"
@@ -607,7 +612,7 @@
               <v-card>
                 <v-list>
                   <template v-if="tlsType == 0">
-                    <v-list-item>
+                    <v-list-item v-if="!$slots['server-name']">
                       <v-switch
                         v-model="optionSNI"
                         color="primary"
@@ -1054,6 +1059,7 @@ export default {
       }
     },
     changeTlsType(){
+      const serverName = this.inTls.server_name
       if (this.tlsType) {
         this.tls.server = <iTls>{
           enabled: true,
@@ -1065,6 +1071,7 @@ export default {
         this.tls.server = <iTls>{ enabled: true }
         this.tls.client = <oTls>{}
       }
+      if (this.$slots['server-name']) this.tls.server.server_name = serverName
     },
     closeModal() {
       this.updateData(0) // reset

@@ -365,21 +365,26 @@
             </v-window-item>
             <v-window-item value="t3">
               <NodeClientLinks
-                v-if="client.nodes?.length || client.nodeinbounds?.length"
+                v-slot="{ links: displayedLinks }"
                 :client-id="id"
-                :active="visible && tab === 't3'"
-              />
-              <v-row
-                v-for="(lnk, index) in links"
-                :key="index"
+                :active="visible && tab === 't3' && !!(client.nodes?.length || client.nodeinbounds?.length)"
+                :local-links="links"
               >
-                <v-col cols="auto">
-                  {{ index + 1 }}
-                </v-col>
-                <v-col style="direction: ltr; overflow-y: hidden;">
-                  {{ lnk.uri }}
-                </v-col>
-              </v-row>
+                <v-row
+                  v-for="(lnk, index) in displayedLinks"
+                  :key="index"
+                >
+                  <v-col cols="auto">
+                    {{ index + 1 }}
+                  </v-col>
+                  <v-col
+                    dir="ltr"
+                    style="overflow-wrap: anywhere;"
+                  >
+                    {{ lnk.uri }}
+                  </v-col>
+                </v-row>
+              </NodeClientLinks>
               <v-row>
                 <v-col>
                   <v-btn

@@ -15,6 +15,33 @@
     @close="tlsOpen=false"
     @save="saveTLS"
   >
+    <template #server-name="{ server }">
+      <v-col
+        cols="12"
+        sm="6"
+        md="4"
+      >
+        <v-select
+          :model-value="sourceMode(tlsSniSource)"
+          :items="sourceItems(sniPath, true, false)"
+          :label="$t('nodeUI.fieldSource', { field: 'SNI' })"
+          hide-details
+          @update:model-value="tlsSniSource = valueSource(sniPath, $event)"
+        />
+      </v-col>
+      <v-col
+        v-if="sourceMode(tlsSniSource) === 'manual'"
+        cols="12"
+        sm="6"
+        md="4"
+      >
+        <v-text-field
+          v-model="server.server_name"
+          label="SNI"
+          hide-details
+        />
+      </v-col>
+    </template>
     <template #handshake-source="{ port }">
       <v-select
         :model-value="sourceMode(tlsHandshakeSource)"
@@ -234,20 +261,6 @@
                         {{ $t('nodeUI.tlsSettings') }}
                       </v-btn><span v-if="tlsData.server.enabled && tlsData.server.reality?.enabled">REALITY</span>
                     </div>
-                    <v-select
-                      v-if="tlsData.server.enabled"
-                      :model-value="sourceMode(sources[sniPath])"
-                      class="mt-4"
-                      :items="sourceItems(sniPath, true, false)"
-                      :label="$t('nodeUI.fieldSource', { field: 'SNI' })"
-                      @update:model-value="setSource(sniPath, $event)"
-                    />
-                    <v-text-field
-                      v-if="sourceMode(sources[sniPath]) === 'manual' && tlsData.server.enabled"
-                      v-model="tlsData.server.server_name"
-                      label="SNI"
-                      @input="sniTouched=true"
-                    />
                   </template>
                 </v-card-text>
               </v-card>
@@ -395,6 +408,7 @@ const profileId = ref(0)
 const sources = ref<Record<string, ValueSource>>(clone(entry.value.sources))
 const tlsOpen = ref(false)
 const tlsHandshakeSource = ref<ValueSource>()
+const tlsSniSource = ref<ValueSource>()
 const quicTransport = computed(() => 'transport' in form.value && form.value.transport?.type === 'quic')
 const muxAvailable = computed(() => ['vless', 'vmess', 'trojan', 'shadowsocks'].includes(form.value.type))
 const ordinaryTLSRequired = computed(() => quicTransport.value || ['tuic', 'hysteria2', 'hysteria', 'naive', 'anytls'].includes(form.value.type))
@@ -450,7 +464,6 @@ function setSource(path: string, mode: SourceMode) {
   const source = valueSource(path, mode)
   if (source) sources.value[path] = source
   else delete sources.value[path]
-  if (path === sniPath) sniTouched.value = true
 }
 
 const reality = computed(() => {
@@ -560,6 +573,7 @@ function changeProtocol() {
 }
 
 function openTLS() {
+  tlsSniSource.value = sources.value[sniPath]
   tlsHandshakeSource.value = sources.value[handshakePath]
   tlsOpen.value = true
 }
@@ -573,6 +587,10 @@ watch(quicTransport, quic => {
 
 function saveTLS(value: tls) {
   if (props.nodeOverride) value = { ...value, client: tlsData.value.client }
+  sniTouched.value ||= sources.value[sniPath] !== tlsSniSource.value ||
+    tlsData.value.server.server_name !== value.server.server_name
+  if (tlsSniSource.value) sources.value[sniPath] = tlsSniSource.value
+  else delete sources.value[sniPath]
   tlsData.value = clone(value)
   if (form.value.type !== 'vless') delete tlsData.value.server.reality
   if (reality.value && tlsHandshakeSource.value) sources.value[handshakePath] = tlsHandshakeSource.value
