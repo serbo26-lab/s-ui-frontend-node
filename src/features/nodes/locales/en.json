@@ -273,6 +273,7 @@
     "operationFailed": "Operation failed",
     "errors": {
       "structural_update_failed": "The agent could not apply the settings. Check the node status and retry.",
+      "node_firewall_failed": "Could not open the inbound ports in the node firewall. Check SSH access and firewall rules.",
       "node_domain_not_ready": "Waiting for the node domain. Settings will apply once DNS is ready.",
       "node_certificate_not_ready": "Waiting for the node certificate. Settings will apply once it is installed.",
       "node_agent_protocols_pending": "Waiting for the node agent to update.",

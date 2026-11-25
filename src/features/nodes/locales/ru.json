@@ -280,6 +280,7 @@
       "node_tls_profile_reality_target_required": "Укажите сервер рукопожатия REALITY в шаблоне TLS.",
       "node_tls_profile_requires_non_quic_vless": "Шаблон REALITY требует VLESS без QUIC.",
       "structural_update_failed": "Агент не смог применить настройки. Проверьте состояние ноды и повторите применение.",
+      "node_firewall_failed": "Не удалось открыть порты входящих в межсетевом экране ноды. Проверьте SSH-доступ и правила межсетевого экрана.",
       "node_domain_not_ready": "Ожидается домен ноды. Настройки применятся после готовности DNS.",
       "node_certificate_not_ready": "Ожидается сертификат ноды. Настройки применятся после его установки.",
       "node_agent_protocols_pending": "Ожидается обновление агента ноды.",
