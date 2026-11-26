@@ -114,7 +114,7 @@ export interface NodeInstallation {
 }
 export interface NodeJob {
   model_version?:number
-  id:string; node_id:number; action:string; state:string; stage:string; error:string; warning?:string
+  id:string; node_id:number; action:string; state:string; stage:string; error:string
   created:number; updated:number; events:{time:number;stage:string;state:string;error?:string}[]
 }
 export interface ProvisionDomain {mode:string;profile_id:number;zone_id:string;prefix:string;automatic_prefix:boolean;fqdn:string;certificate_mode:string;certificate_method:string;email:string;certificate:string;key:string;certificate_path:string;key_path:string}
