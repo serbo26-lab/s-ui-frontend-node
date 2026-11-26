@@ -206,7 +206,7 @@
     "nodeName": "Node name",
     "nameRequired": "Enter a connection name.",
     "portInvalid": "Port must be an integer from 1 to 65535.",
-    "targetRequired": "Set the REALITY handshake target in TLS settings.",
+    "targetRequired": "Set Handshake Server for custom REALITY settings, or select a TLS template.",
     "private": "Private template",
     "shared": "Shared template",
     "version": "Version",

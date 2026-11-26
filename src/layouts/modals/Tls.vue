@@ -16,7 +16,7 @@
       <v-divider />
       <v-card-text style="padding: 0 16px; overflow-y: scroll;">
         <v-card class="rounded-lg">
-          <v-row>
+          <v-row v-if="showName || allowReality">
             <v-col
               v-if="showName"
               cols="12"
@@ -29,7 +29,7 @@
                 hide-details
               />
             </v-col>
-            <v-col align="end">
+            <v-col v-if="allowReality" align="end">
               <v-btn-toggle
                 v-model="tlsType"
                 class="rounded-xl"
@@ -40,7 +40,7 @@
                 @update:model-value="changeTlsType"
               >
                 <v-btn>TLS</v-btn>
-                <v-btn v-if="allowReality">
+                <v-btn>
                   Reality
                 </v-btn>
               </v-btn-toggle>
@@ -274,6 +274,8 @@
                   v-model="inTls.reality.handshake.server"
                   :label="$t('types.shdwTls.hs')"
                   hide-details
+                  @blur="realityTargetTouched = true"
+                  @update:model-value="realityTargetTouched = true"
                 />
               </v-col>
               <v-col
@@ -287,6 +289,7 @@
                   type="number"
                   min="0"
                   hide-details
+                  @update:model-value="realityTargetTouched = true"
                 />
               </v-col>
               <v-spacer />
@@ -717,7 +720,7 @@
           </v-card-actions>
         </v-card>
         <v-alert
-          v-if="realityTargetError"
+          v-if="showRealityTargetError"
           type="error"
           variant="tonal"
           class="mt-3"
@@ -788,6 +791,7 @@ export default {
       loading: false,
       menu: false,
       tlsType: 0,
+      realityTargetTouched: false,
       usePath: 0,
       alpn: [
         { title: "H3", value: 'h3' },
@@ -855,6 +859,9 @@ export default {
       const handshake = this.inTls.reality?.handshake
       if (!handshake || !this.inTls.reality?.enabled || !this.validateRealityTarget) return ''
       return this.validateRealityTarget(handshake.server || '', this.server_port)
+    },
+    showRealityTargetError(): boolean {
+      return !!this.realityTargetError && (this.realityTargetTouched || this.handshakeFromSource || !!this.inTls.reality?.handshake?.server?.trim())
     },
     clientCaText: {
       get(): string { return this.inTls.client_certificate ? this.inTls.client_certificate.join('\n') : '' },
@@ -1036,6 +1043,7 @@ export default {
       }
     },
     updateData(id: number) {
+      this.realityTargetTouched = false
       if (id > 0) {
         const newData = <tls>JSON.parse(this.$props.data)
         this.tls = newData

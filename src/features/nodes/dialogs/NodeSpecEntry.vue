@@ -8,11 +8,11 @@
     :show-name="false"
     managed-material
     :server-only="nodeOverride"
-    :allow-reality="form.type==='vless' && !quicTransport"
+    :allow-reality="allowReality"
     :handshake-from-source="sourceMode(tlsHandshakeSource) !== 'manual'"
     :validate-reality-target="(server, port) => handshakeError(tlsHandshakeSource, server, port)"
     :context-name="form.tag"
-    @close="tlsOpen=false"
+    @close="tlsOpen=false; tlsVisited=true"
     @save="saveTLS"
   >
     <template #server-name="{ server }">
@@ -249,7 +249,7 @@
                     <div class="d-flex flex-wrap align-center ga-3">
                       <v-switch
                         v-model="tlsData.server.enabled"
-                        :label="$t('tls.enable')"
+                        :label="tlsData.server.reality?.enabled ? $t('enable') + ' REALITY' : $t('tls.enable')"
                         :disabled="ordinaryTLSRequired"
                         hide-details
                         color="primary"
@@ -258,7 +258,7 @@
                         :disabled="!tlsData.server.enabled"
                         @click="openTLS"
                       >
-                        {{ $t('nodeUI.tlsSettings') }}
+                        {{ $t(allowReality ? 'nodeUI.tlsSettings' : 'pages.tls') }}
                       </v-btn><span v-if="tlsData.server.enabled && tlsData.server.reality?.enabled">REALITY</span>
                     </div>
                   </template>
@@ -326,7 +326,7 @@
             {{ error }}
           </v-alert>
           <v-alert
-            v-if="validation"
+            v-if="validation && (validation !== $t('nodeUI.targetRequired') || !!value || tlsVisited)"
             type="warning"
             variant="tonal"
             class="mt-3"
@@ -410,6 +410,8 @@ const tlsOpen = ref(false)
 const tlsHandshakeSource = ref<ValueSource>()
 const tlsSniSource = ref<ValueSource>()
 const quicTransport = computed(() => 'transport' in form.value && form.value.transport?.type === 'quic')
+const allowReality = computed(() => form.value.type === 'vless' && !quicTransport.value)
+const tlsVisited = ref(false)
 const muxAvailable = computed(() => ['vless', 'vmess', 'trojan', 'shadowsocks'].includes(form.value.type))
 const ordinaryTLSRequired = computed(() => quicTransport.value || ['tuic', 'hysteria2', 'hysteria', 'naive', 'anytls'].includes(form.value.type))
 const profileOptions = computed(() => [
@@ -515,6 +517,7 @@ watch([() => props.visible, () => props.value], ([visible, value]) => {
   portTouched.value = false
   sniTouched.value = false
   tlsOpen.value = false
+  tlsVisited.value = false
 }, { immediate: true })
 
 function validateTLS() {
@@ -528,6 +531,7 @@ function validateTLS() {
     return ''
   }
   if (ordinaryTLSRequired.value && (!server.enabled || server.reality?.enabled)) return t('nodeUI.regularTLSRequired')
+  if (!server.enabled) return ''
   if (reality.value) {
     const error = handshakeError(sources.value[handshakePath], reality.value.handshake?.server ?? '', reality.value.handshake?.server_port || 443)
     if (error) return error
