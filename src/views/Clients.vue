@@ -433,22 +433,15 @@ import Stats from '@/layouts/modals/Stats.vue'
 import Sessions from '@/layouts/modals/Sessions.vue'
 import { Client } from '@/types/clients'
 import { Inbound } from '@/types/inbounds'
-import { computed, ref, onMounted } from 'vue'
+import { computed, ref } from 'vue'
 import { HumanReadable } from '@/plugins/utils'
 import { i18n, locale } from '@/locales'
 import { useDisplay } from 'vuetify'
 import HttpUtils from '@/plugins/httputil'
-import Nodes from '@/features/nodes/state/nodes'
 
 const { smAndDown } = useDisplay()
-const nodeStore=Nodes()
-onMounted(()=>nodeStore.load())
-const nodeByInbound = computed(() => new Map(nodeStore.inbounds.map(inbound => [inbound.id, inbound.node_id])))
-
 function nodeCount(client: Client) {
-  if (client.nodes) return client.nodes.length
-  const owners = (client.nodeinbounds ?? []).map(id => nodeByInbound.value.get(id))
-  return new Set(owners.filter(id => id !== undefined)).size
+  return client.nodes?.length ?? 0
 }
 
 // A client as it comes back from the panel: saved, so it carries the id and

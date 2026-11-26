@@ -54,7 +54,6 @@ export function openEntry(entry: SpecEntry) {
   for (const [path, source] of Object.entries(entry.sources ?? {}))
     if (source.kind === 'literal') setPath(options, path, source.value)
   const state = openNodeInbound({
-    key: entry.connection_key,
     tag: entry.name,
     type: entry.protocol,
     enable: entry.enable,

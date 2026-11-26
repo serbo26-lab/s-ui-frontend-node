@@ -232,20 +232,10 @@ export default {
           })
           break
         case 'add_nodes':
-          targetClients.forEach((c:Client)=>{c.nodes=[...new Set([...(c.nodes??[]),...this.editData.inboundTags])].sort((a,b)=>a-b);delete c.nodeinbounds})
+          targetClients.forEach((c:Client)=>{c.nodes=[...new Set([...(c.nodes??[]),...this.editData.inboundTags])].sort((a,b)=>a-b)})
           break
         case 'remove_nodes':
-          targetClients.forEach((c:Client)=>{c.nodes=(c.nodes??[]).filter(id=>!this.editData.inboundTags.includes(id));delete c.nodeinbounds})
-          break
-        case 'add_nodeinbounds':
-          targetClients.forEach((client: Client) => {
-            client.nodeinbounds = [...new Set([...(client.nodeinbounds ?? []), ...this.editData.inboundTags])].sort((a, b) => a - b)
-          })
-          break
-        case 'remove_nodeinbounds':
-          targetClients.forEach((client: Client) => {
-            client.nodeinbounds = (client.nodeinbounds ?? []).filter(id => !this.editData.inboundTags.includes(id))
-          })
+          targetClients.forEach((c:Client)=>{c.nodes=(c.nodes??[]).filter(id=>!this.editData.inboundTags.includes(id))})
           break
         case 'delete_bulk': {
           const success = await Data().save("clients", "delbulk", targetClients.map((c: Client) => c.id))
@@ -254,7 +244,7 @@ export default {
           return
         }
       }
-      targetClients.forEach((c:Client)=>{if(c.node_migration_required && !['add_nodes','remove_nodes'].includes(this.actionMode))delete c.nodes;else if(!c.node_migration_required)delete c.nodeinbounds})
+      targetClients.forEach((client) => { delete client.nodeinbounds })
       const success = await Data().save("clients", 'editbulk', targetClients)
       if (success) this.closeModal()
       this.loading = false

@@ -100,7 +100,7 @@ export default defineStore('Nodes', {
         if (session === requestSession) this.loading = false
       }
     },
-    async save(object: 'nodes' | 'nodeinbounds' | 'nodetemplates', action: string, data: unknown) {
+    async save(object: 'nodes' | 'nodetemplates', action: string, data: unknown) {
       this.lastSaveError = ''
       this.writeEpoch++
       this.writes++

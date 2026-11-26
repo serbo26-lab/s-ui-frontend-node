@@ -128,7 +128,7 @@
             <NodeClientLinks
               v-slot="{ links: displayedLinks }"
               :client-id="id"
-              :active="visible && tab === 'link' && !!(client.nodes?.length || client.nodeinbounds?.length)"
+              :active="visible && tab === 'link' && !!client.nodes?.length"
               :local-links="clientLinks"
             >
               <v-row

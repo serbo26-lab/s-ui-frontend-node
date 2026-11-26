@@ -1,4 +1,4 @@
-import type { NodeInbound, NodeBlueprint, NodeRecord } from './nodes'
+import type { NodeInbound, NodeRecord } from './nodes'
 import type { Inbound } from '@/types/inbounds'
 import { createInbound } from '@/types/inbounds'
 import type { tls } from '@/types/tls'
@@ -44,11 +44,13 @@ export function nodeStatus(
   return node.enable ? 'applied' : 'disabled'
 }
 
-export function openNodeInbound(value?: NodeInbound | NodeBlueprint) {
+type InboundFields = Pick<NodeInbound, 'type' | 'tag' | 'enable' | 'options' | 'client_tls'>
+
+export function openNodeInbound(value?: InboundFields & { id?: number }) {
   const protocol = value?.type ?? 'vless'
   const form = createInbound(protocol, {
     ...clone(value?.options ?? {}),
-    id: 'id' in (value ?? {}) ? (value as NodeInbound).id : 0,
+    id: value?.id ?? 0,
     tag: value?.tag ?? '',
     enable: value?.enable ?? true,
     type: protocol,
@@ -63,7 +65,7 @@ export function openNodeInbound(value?: NodeInbound | NodeBlueprint) {
   return { form, tls: tlsConfig }
 }
 
-export function serializeNodeInbound(form: Inbound, tlsConfig: tls): Omit<NodeBlueprint, 'key'> {
+export function serializeNodeInbound(form: Inbound, tlsConfig: tls): InboundFields {
   const options = clone(form) as unknown as Record<string, unknown>
   for (const key of ['id', 'tag', 'type', 'enable', 'tls_id', 'addrs', 'out_json', 'users', 'tls'])
     delete options[key]
@@ -71,7 +73,7 @@ export function serializeNodeInbound(form: Inbound, tlsConfig: tls): Omit<NodeBl
   options.tls = clone(tlsConfig.server)
   return {
     tag: form.tag.trim(),
-    type: form.type as NodeBlueprint['type'],
+    type: form.type as NodeInbound['type'],
     enable: form.enable !== false,
     options,
     client_tls: { ...clone(tlsConfig.client) },

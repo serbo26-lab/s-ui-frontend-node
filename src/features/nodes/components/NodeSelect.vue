@@ -39,6 +39,7 @@
   </v-alert>
 </template>
 <script setup lang="ts">
+import { isManagedNode } from '@/features/nodes/types/nodes'
 import { computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import Nodes from '@/features/nodes/state/nodes'
@@ -47,7 +48,7 @@ const emit = defineEmits<{ 'update:modelValue': [number[]] }>()
 const store = Nodes()
 const { t } = useI18n()
 const assignable = computed(() => store.nodes.flatMap(node =>
-  node.assignment_mode === 'node' && node.id !== undefined
+  isManagedNode(node) && node.id !== undefined
     ? [{ value: node.id, title: node.name + (node.pending ? ' · ' + t('nodes.state.pending') : '') }]
     : []))
 const items = computed(() => {

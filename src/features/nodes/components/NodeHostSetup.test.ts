@@ -43,7 +43,7 @@ it('assigns a DNS profile automatically for TLS without asking for PEM or server
 })
 
 it('retains the opened settings version during polling and requires password for a new host key',async()=>{
- const node:NodeRecord={id:7,name:'Node',address:'https://node.example',linkaddress:'node.example',template_id:4,enable:true,desired_revision:3,applied_revision:3,last_seen:1,control_tls_configured:true,settings_version:9}
+ const node:NodeRecord={id:7,name:'Node',address:'https://node.example',linkaddress:'node.example',template_id:4,enable:true,desired_revision:3,applied_revision:3,last_seen:1,settings_version:9}
  const installation={node_id:7,ip:'192.0.2.10',ssh_port:22,ssh_user:'root',host_fingerprint:'',domain:'node.example',protocols:['vless'],control_port:16500,ready:true}
  const w=mount(NodeHostSetup,{props:{...base,node,installation,recover:true},global})
  await w.setProps({node:{...node,settings_version:10}})

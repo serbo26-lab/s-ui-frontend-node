@@ -278,21 +278,7 @@
               </v-row>
               <v-row>
                 <v-col>
-                  <NodeInboundSelect
-                    v-if="client.node_migration_required"
-                    :model-value="client.nodeinbounds ?? []"
-                    readonly
-                  />
-                  <NodeSelect
-                    v-else
-                    v-model="clientNodes"
-                  />
-                  <p
-                    v-if="client.node_migration_required"
-                    class="text-body-2 my-2"
-                  >
-                    {{ $t('nodeUI.legacyAssignment') }}
-                  </p>
+                  <NodeSelect v-model="clientNodes" />
                 </v-col>
               </v-row>
             </v-window-item>
@@ -367,7 +353,7 @@
               <NodeClientLinks
                 v-slot="{ links: displayedLinks }"
                 :client-id="id"
-                :active="visible && tab === 't3' && !!(client.nodes?.length || client.nodeinbounds?.length)"
+                :active="visible && tab === 't3' && !!client.nodes?.length"
                 :local-links="links"
               >
                 <v-row
@@ -469,7 +455,6 @@ import Data from '@/store/modules/data'
 import { locale } from '@/locales'
 import type { PropType } from 'vue'
 import NodeSelect from '@/features/nodes/components/NodeSelect.vue'
-import NodeInboundSelect from '@/features/nodes/components/NodeInboundSelect.vue'
 import NodeClientLinks from '@/features/nodes/components/NodeClientLinks.vue'
 
 // The per-protocol credentials of a client. The type is internal to
@@ -483,7 +468,7 @@ interface InboundTag {
 }
 
 export default {
-  components: { DatePick, NodeSelect, NodeInboundSelect, NodeClientLinks },
+  components: { DatePick, NodeSelect, NodeClientLinks },
   props: {
     visible: { type: Boolean, required: true },
     id: { type: Number, required: true },
@@ -608,8 +593,7 @@ export default {
                         ...this.extLinks.filter(l => l.uri != ''),
                         ...this.subLinks.filter(l => l.uri != '')]
       const payload = { ...this.client }
-      if (payload.node_migration_required) delete payload.nodes
-      else delete payload.nodeinbounds
+      delete payload.nodeinbounds
       const success = await Data().save("clients", this.$props.id == 0 ? "new" : "edit", payload)
       if (success) this.closeModal()
       this.loading = false

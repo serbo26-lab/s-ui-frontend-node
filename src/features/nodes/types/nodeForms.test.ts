@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest'
 import { isPublishedAddress, nodeStatus, openNodeInbound, serializeNodeInbound } from './nodeForms'
 import type { NodeRecord, NodeInbound } from './nodes'
 
-const node: NodeRecord = { id: 1, name: 'node', address: 'https://node.example', linkaddress: 'node.example', enable: true, template_id: 0, desired_revision: 7, applied_revision: 7, last_seen: 100, control_tls_configured: true }
+const node: NodeRecord = { id: 1, name: 'node', address: 'https://node.example', linkaddress: 'node.example', enable: true, template_id: 0, desired_revision: 7, applied_revision: 7, last_seen: 100 }
 describe('node management forms', () => {
   it('accepts hostnames and rejects URLs/whitespace as published addresses', () => {
     expect(isPublishedAddress('server.example')).toBe(true)

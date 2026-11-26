@@ -533,7 +533,7 @@
                 v-else
                 class="text-body-2"
               >
-                {{ $t('nodeUI.legacyBoundary') }}
+                {{ $t('nodeUI.errors.unsupported_node_model') }}
               </p>
             </v-container>
           </v-card-text>
@@ -734,6 +734,7 @@
 </template>
 <script setup lang="ts">
 import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { isManagedNode } from '@/features/nodes/types/nodes'
 import { useI18n } from 'vue-i18n'
 import Nodes from '@/features/nodes/state/nodes'
 import Data from '@/store/modules/data'
@@ -901,7 +902,7 @@ const selectedCertificate = computed(() =>
 )
 const structureTask = computed(() => workspace.value?.tasks.find((task) => task.kind === 'structure'))
 const isLiveNode = computed(
-  () => selected.value?.assignment_mode === 'node' && selected.value.agent_protocol === 2,
+  () => !!selected.value && isManagedNode(selected.value),
 )
 const catalog = computed(() => store.templates.filter((template) => template.kind === 'inbound'))
 const availableInbounds = computed(() =>
@@ -1137,7 +1138,7 @@ async function applyInbounds() {
   if (ok) selectionVersion.value = selected.value?.settings_version ?? 0
 }
 function canToggleNode(node: NodeRecord) {
-  return node.assignment_mode === 'node' && node.agent_protocol === 2 && !activeNodeJob(node.id)
+  return isManagedNode(node) && !activeNodeJob(node.id)
 }
 
 async function toggleNode(node: NodeRecord, enable: boolean) {

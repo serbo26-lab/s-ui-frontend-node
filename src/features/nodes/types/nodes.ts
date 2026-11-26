@@ -12,8 +12,7 @@ export interface NodeRecord {
   applied_revision: number
   last_seen: number
   last_error?: string
-  control_tls_configured: boolean
-  assignment_mode?: 'legacy' | 'prepared' | 'activating' | 'node'
+  assignment_mode?: string
   agent_protocol?: number
   agent_extended_inbounds?: boolean
   agent_running?: boolean
@@ -30,6 +29,10 @@ export interface NodeRecord {
   tls_status?: { revision:number, observed_at:number, certificates:NodeCertificateStatus[] | null } | null
 }
 
+export function isManagedNode(node: NodeRecord): boolean {
+  return node.assignment_mode === 'node' && node.agent_protocol === 2 && !!node.template_target_version
+}
+
 export interface NodeCertificateStatus {
   inbound:string
   provider?:string
@@ -44,8 +47,6 @@ export interface NodeTemplate {
   id?: number
   name: string
   config: Record<string, unknown>
-  blueprints?: NodeBlueprint[] | null
-  protocols?: string[] | null
   version?: number
   schema_version?: number
   kind?: 'inbound' | 'deployment'
@@ -59,16 +60,12 @@ export const nodeInboundProtocols = ['vless', 'tuic', 'hysteria2', 'vmess', 'tro
 export const nodeSupportsTLS = (kind:string) => !['shadowsocks','snell','shadowtls','socks','mixed'].includes(kind)
 export type NodeInboundProtocol = typeof nodeInboundProtocols[number]
 
-export interface NodeBlueprint {
-  key: string
+export interface NodeInbound {
   tag: string
   type: NodeInboundProtocol
   enable: boolean
   options: Partial<Inbound> & Record<string, unknown>
   client_tls: Record<string, unknown> | null
-}
-
-export interface NodeInbound extends Omit<NodeBlueprint, 'key'> {
   id?: number
   node_id: number
   source_template_id?: number

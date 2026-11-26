@@ -15,7 +15,7 @@ const empty: NodesBundle = { nodes: [], nodetemplates: [], nodeinbounds: [] }
 it('does not overwrite a successful save with an older background poll', async () => {
   let finish: (value: {success:boolean,msg:string,obj:NodesBundle})=>void = () => {}
   vi.mocked(HttpUtils.get).mockImplementation(() => new Promise(resolve => { finish = resolve }))
-  const saved: NodesBundle = { ...empty, nodetemplates: [{ id: 1, name: 'new-template', config: {}, blueprints: [] }] }
+  const saved: NodesBundle = { ...empty, nodetemplates: [{ id: 1, name: 'new-template', config: {} }] }
   vi.mocked(HttpUtils.post).mockResolvedValue({success:true,msg:'',obj:saved})
   const store=Nodes(), poll=store.load()
   await store.save('nodetemplates','new',{name:'new-template',config:{}})
