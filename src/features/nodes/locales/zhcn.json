@@ -254,7 +254,8 @@
       "invalid_node_backup_key": "节点恢复密钥无效。",
       "invalid_node_backup_archive": "备份文件无效或过大。",
       "invalid_node_backup_manifest": "备份清单或数据库校验和无效。",
-      "incomplete_node_backup_exclusions": "完整备份仅可排除流量统计和变更日志。"
+      "incomplete_node_backup_exclusions": "完整备份仅可排除流量统计和变更日志。",
+      "node_backup_state_stale": "此备份包含较旧或冲突的节点状态。当前数据库已保留。请使用更新的完整备份。"
     },
     "states": {
       "ready": "就绪",

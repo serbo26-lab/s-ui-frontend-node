@@ -254,7 +254,8 @@
       "invalid_node_backup_key": "節點恢復金鑰無效。",
       "invalid_node_backup_archive": "備份檔案無效或過大。",
       "invalid_node_backup_manifest": "備份清單或資料庫校驗和無效。",
-      "incomplete_node_backup_exclusions": "完整備份僅可排除流量統計及變更日誌。"
+      "incomplete_node_backup_exclusions": "完整備份僅可排除流量統計及變更日誌。",
+      "node_backup_state_stale": "此備份包含較舊或衝突的節點狀態。目前的資料庫已保留。請使用較新的完整備份。"
     },
     "states": {
       "ready": "就緒",

@@ -254,7 +254,8 @@
       "invalid_node_backup_key": "Khóa khôi phục nút không hợp lệ.",
       "invalid_node_backup_archive": "Tệp sao lưu không hợp lệ hoặc quá lớn.",
       "invalid_node_backup_manifest": "Bản kê sao lưu hoặc checksum cơ sở dữ liệu không hợp lệ.",
-      "incomplete_node_backup_exclusions": "Sao lưu đầy đủ chỉ có thể loại trừ thống kê lưu lượng và nhật ký thay đổi."
+      "incomplete_node_backup_exclusions": "Sao lưu đầy đủ chỉ có thể loại trừ thống kê lưu lượng và nhật ký thay đổi.",
+      "node_backup_state_stale": "Bản sao lưu chứa trạng thái nút cũ hoặc xung đột. Cơ sở dữ liệu hiện tại được giữ nguyên. Hãy dùng bản sao lưu đầy đủ mới hơn."
     },
     "states": {
       "ready": "Sẵn sàng",

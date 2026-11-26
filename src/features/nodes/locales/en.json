@@ -254,7 +254,8 @@
       "invalid_node_backup_key": "The node recovery key is invalid.",
       "invalid_node_backup_archive": "Invalid or oversized backup archive.",
       "invalid_node_backup_manifest": "The backup manifest or database checksum is invalid.",
-      "incomplete_node_backup_exclusions": "A full backup may exclude only traffic statistics and the change log."
+      "incomplete_node_backup_exclusions": "A full backup may exclude only traffic statistics and the change log.",
+      "node_backup_state_stale": "This backup contains older or conflicting node state. The current database was kept. Use a newer full backup."
     },
     "states": {
       "ready": "Ready",
