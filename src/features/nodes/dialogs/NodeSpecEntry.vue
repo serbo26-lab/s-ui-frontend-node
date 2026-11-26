@@ -359,14 +359,27 @@
 <script setup lang="ts">
 import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { nodeInboundProtocols, nodeSupportsTLS, type NodeTLSProfile, type SpecEntry, type ValueSource } from '@/features/nodes/types/nodes'
+import {
+  nodeInboundProtocols,
+  nodeSupportsTLS,
+  type NodeTLSProfile,
+  type SpecEntry,
+  type ValueSource,
+} from '@/features/nodes/types/nodes'
 import type { tls } from '@/types/tls'
 import Hysteria from '@/components/protocols/Hysteria.vue'
 import Naive from '@/components/protocols/Naive.vue'
 import Shadowsocks from '@/components/protocols/Shadowsocks.vue'
 import Snell from '@/components/protocols/Snell.vue'
 import ShadowTls from '@/components/protocols/ShadowTls.vue'
-import { clone, handshakePath, hostPath, newEntry, openEntry, saveEntry } from '@/features/nodes/types/nodeSpec'
+import {
+  clone,
+  handshakePath,
+  hostPath,
+  newEntry,
+  openEntry,
+  saveEntry,
+} from '@/features/nodes/types/nodeSpec'
 import Listen from '@/components/Listen.vue'
 import Tuic from '@/components/protocols/Tuic.vue'
 import Hysteria2 from '@/components/protocols/Hysteria2.vue'
@@ -392,14 +405,27 @@ const props = defineProps<{
   nodeAddress?: string
   nodeDomain?: string
   nodeIP?: string
-  detourTargets?: {title: string; value: string}[]
+  detourTargets?: { title: string; value: string }[]
 }>()
-const emit = defineEmits<{close: []; save: [SpecEntry]; reload: []}>()
+const emit = defineEmits<{ close: []; save: [SpecEntry]; reload: [] }>()
 const { t } = useI18n()
 
 const sniPath = '/tls/server_name'
-const shadowsocksMethods = ['aes-128-gcm', 'aes-192-gcm', 'aes-256-gcm', 'chacha20-ietf-poly1305', 'xchacha20-ietf-poly1305', '2022-blake3-aes-128-gcm', '2022-blake3-aes-256-gcm']
-const protocolItems = nodeInboundProtocols.map(value => ({value, title: value === 'anytls' ? 'AnyTLS' : value === 'vmess' ? 'VMess' : value.toUpperCase()}))
+const shadowsocksMethods = [
+  'aes-128-gcm',
+  'aes-192-gcm',
+  'aes-256-gcm',
+  'chacha20-ietf-poly1305',
+  'xchacha20-ietf-poly1305',
+  '2022-blake3-aes-128-gcm',
+  '2022-blake3-aes-256-gcm',
+]
+function protocolTitle(protocol: string) {
+  if (protocol === 'anytls') return 'AnyTLS'
+  if (protocol === 'vmess') return 'VMess'
+  return protocol.toUpperCase()
+}
+const protocolItems = nodeInboundProtocols.map((value) => ({ value, title: protocolTitle(value) }))
 const entry = ref(newEntry())
 const initial = openEntry(entry.value)
 const form = ref(initial.form)
@@ -413,11 +439,14 @@ const quicTransport = computed(() => 'transport' in form.value && form.value.tra
 const allowReality = computed(() => form.value.type === 'vless' && !quicTransport.value)
 const tlsVisited = ref(false)
 const muxAvailable = computed(() => ['vless', 'vmess', 'trojan', 'shadowsocks'].includes(form.value.type))
-const ordinaryTLSRequired = computed(() => quicTransport.value || ['tuic', 'hysteria2', 'hysteria', 'naive', 'anytls'].includes(form.value.type))
+const ordinaryTLSRequired = computed(
+  () => quicTransport.value || ['tuic', 'hysteria2', 'hysteria', 'naive', 'anytls'].includes(form.value.type),
+)
 const profileOptions = computed(() => [
   { title: t('nodeUI.inlineTLS'), value: 0 },
-  ...props.tlsProfiles.map(profile => ({
-    title: profile.name, value: profile.id,
+  ...props.tlsProfiles.map((profile) => ({
+    title: profile.name,
+    value: profile.id,
     props: { disabled: profile.reality && (form.value.type !== 'vless' || quicTransport.value) },
   })),
 ])
@@ -431,21 +460,38 @@ type SourceMode = 'manual' | 'primary_domain' | 'node_address' | 'existing'
 
 function sourceMode(source?: ValueSource): SourceMode {
   if (!source || source.kind === 'literal') return 'manual'
-  if (source.kind === 'node_parameter' && (source.name === 'primary_domain' || source.name === 'node_address')) return source.name
+  if (
+    source.kind === 'node_parameter' &&
+    (source.name === 'primary_domain' || source.name === 'node_address')
+  )
+    return source.name
   return 'existing'
 }
 
-function sourceItems(path: string, domain: boolean, address: boolean, isDisabled?: (mode: SourceMode) => boolean) {
+function sourceItems(
+  path: string,
+  domain: boolean,
+  address: boolean,
+  isDisabled?: (mode: SourceMode) => boolean,
+) {
   const original = entry.value.sources[path]
   const originalMode = sourceMode(original)
-  const items: {title: string; value: SourceMode; props?: {disabled: boolean}}[] = [
+  const items: { title: string; value: SourceMode; props?: { disabled: boolean } }[] = [
     { title: t('nodeUI.manual'), value: 'manual' },
   ]
   if (domain || originalMode === 'primary_domain') {
-    items.push({ title: t('nodeUI.nodeDomain'), value: 'primary_domain', props: { disabled: isDisabled?.('primary_domain') ?? false } })
+    items.push({
+      title: t('nodeUI.nodeDomain'),
+      value: 'primary_domain',
+      props: { disabled: isDisabled?.('primary_domain') ?? false },
+    })
   }
   if (address || originalMode === 'node_address') {
-    items.push({ title: t('nodeUI.nodeIP'), value: 'node_address', props: { disabled: isDisabled?.('node_address') ?? false } })
+    items.push({
+      title: t('nodeUI.nodeIP'),
+      value: 'node_address',
+      props: { disabled: isDisabled?.('node_address') ?? false },
+    })
   }
   if (originalMode === 'existing') {
     let title = t('nodeUI.existingSource')
@@ -472,20 +518,38 @@ const reality = computed(() => {
   const server = tlsData.value.server
   return server.enabled && server.reality?.enabled ? server.reality : undefined
 })
-const listenerPort = computed(() => portMode.value === 'manual'
-  ? form.value.listen_port
-  : props.nodeOverride && entry.value.sources['/listen_port']?.kind === 'node_generated'
-    ? Number(entry.value.options.listen_port) : undefined)
+const listenerPort = computed(() => {
+  if (portMode.value === 'manual') return form.value.listen_port
+  if (props.nodeOverride && entry.value.sources['/listen_port']?.kind === 'node_generated') {
+    return Number(entry.value.options.listen_port)
+  }
+  return undefined
+})
+
+function handshakeTarget(mode: SourceMode, server: string) {
+  if (mode === 'primary_domain') return props.nodeDomain ?? 'node.invalid'
+  if (mode === 'node_address') return props.nodeAddress ?? 'node.invalid'
+  return server
+}
 
 function handshakeLoops(source: ValueSource | undefined, server: string, port: number) {
   if (sourceMode(sources.value['/listen']) !== 'manual') return false
   const mode = sourceMode(source)
   const localSource = mode === 'primary_domain' || mode === 'node_address'
-  const target = mode === 'primary_domain' ? props.nodeDomain ?? 'node.invalid'
-    : mode === 'node_address' ? props.nodeAddress ?? 'node.invalid' : server
-  const local = localSource || [props.nodeDomain, props.nodeAddress, props.nodeIP]
-    .some(address => !!address && normalizeRealityHost(address) === normalizeRealityHost(target))
-  return realityTargetIsListener(form.value.listen ?? '', listenerPort.value, port, target, local, local ? props.nodeIP : undefined)
+  const target = handshakeTarget(mode, server)
+  const local =
+    localSource ||
+    [props.nodeDomain, props.nodeAddress, props.nodeIP].some(
+      (address) => !!address && normalizeRealityHost(address) === normalizeRealityHost(target),
+    )
+  return realityTargetIsListener(
+    form.value.listen ?? '',
+    listenerPort.value,
+    port,
+    target,
+    local,
+    local ? props.nodeIP : undefined,
+  )
 }
 
 function handshakeError(source: ValueSource | undefined, server: string, port: number) {
@@ -499,41 +563,52 @@ function selectHandshakeSource(mode: SourceMode, port: number) {
   if (!handshakeLoops(source, '', port)) tlsHandshakeSource.value = source
 }
 
-watch([() => props.visible, () => props.value], ([visible, value]) => {
-  if (!visible) return
-  entry.value = clone(value ?? newEntry())
-  entry.value.sources ??= {}
-  sources.value = clone(entry.value.sources)
-  for (const path of ['/listen', hostPath, handshakePath, sniPath]) {
-    if (sources.value[path]?.kind === 'literal') delete sources.value[path]
-  }
-  const state = openEntry(entry.value)
-  form.value = state.form
-  form.value.listen_port ||= 443
-  tlsData.value = state.tls
-  profileId.value = entry.value.tls_profile_id ?? 0
-  portMode.value = sources.value['/listen_port']?.kind === 'node_generated' ? 'auto' : 'manual'
-  side.value = 'server'
-  portTouched.value = false
-  sniTouched.value = false
-  tlsOpen.value = false
-  tlsVisited.value = false
-}, { immediate: true })
+watch(
+  [() => props.visible, () => props.value],
+  ([visible, value]) => {
+    if (!visible) return
+    entry.value = clone(value ?? newEntry())
+    entry.value.sources ??= {}
+    sources.value = clone(entry.value.sources)
+    for (const path of ['/listen', hostPath, handshakePath, sniPath]) {
+      if (sources.value[path]?.kind === 'literal') delete sources.value[path]
+    }
+    const state = openEntry(entry.value)
+    form.value = state.form
+    form.value.listen_port ||= 443
+    tlsData.value = state.tls
+    profileId.value = entry.value.tls_profile_id ?? 0
+    portMode.value = sources.value['/listen_port']?.kind === 'node_generated' ? 'auto' : 'manual'
+    side.value = 'server'
+    portTouched.value = false
+    sniTouched.value = false
+    tlsOpen.value = false
+    tlsVisited.value = false
+  },
+  { immediate: true },
+)
+
+function validateTLSProfile() {
+  if (props.nodeOverride) return ''
+  const profile = props.tlsProfiles.find((row) => row.id === profileId.value)
+  if (!profile) return t('nodeUI.errors.node_tls_profile_not_found')
+  if (profile.reality && (form.value.type !== 'vless' || quicTransport.value))
+    return t('nodes.quicTlsRequired')
+  return ''
+}
 
 function validateTLS() {
-  const type = form.value.type
   const server = tlsData.value.server
-  if (profileId.value) {
-    if (props.nodeOverride) return ''
-    const profile = props.tlsProfiles.find(row => row.id === profileId.value)
-    if (!profile) return t('nodeUI.errors.node_tls_profile_not_found')
-    if (profile.reality && (type !== 'vless' || quicTransport.value)) return t('nodes.quicTlsRequired')
-    return ''
-  }
-  if (ordinaryTLSRequired.value && (!server.enabled || server.reality?.enabled)) return t('nodeUI.regularTLSRequired')
+  if (profileId.value) return validateTLSProfile()
+  if (ordinaryTLSRequired.value && (!server.enabled || server.reality?.enabled))
+    return t('nodeUI.regularTLSRequired')
   if (!server.enabled) return ''
   if (reality.value) {
-    const error = handshakeError(sources.value[handshakePath], reality.value.handshake?.server ?? '', reality.value.handshake?.server_port || 443)
+    const error = handshakeError(
+      sources.value[handshakePath],
+      reality.value.handshake?.server ?? '',
+      reality.value.handshake?.server_port || 443,
+    )
     if (error) return error
   }
   if (server.enabled && sourceMode(sources.value[sniPath]) === 'manual' && !server.server_name?.trim()) {
@@ -545,11 +620,27 @@ function validateTLS() {
 const validation = computed(() => {
   const { tag, listen_port } = form.value
   if (!tag.trim()) return t('nodeUI.nameRequired')
-  if (form.value.detour && (!props.detourTargets?.some(item => item.value === form.value.detour) || quicTransport.value)) {
+  if (
+    form.value.detour &&
+    (!props.detourTargets?.some((item) => item.value === form.value.detour) || quicTransport.value)
+  ) {
     return t('nodeUI.errors.invalid_node_detour')
   }
-  if (!viaRealm.value && form.value.addrs?.some(addr => !isPublishedAddress(addr.server) || !Number.isInteger(addr.server_port) || addr.server_port < 1 || addr.server_port > 65535)) return t('nodes.invalidPublicAddress')
-  if (portMode.value === 'manual' && (!Number.isInteger(listen_port) || listen_port < 1 || listen_port > 65535)) {
+  if (
+    !viaRealm.value &&
+    form.value.addrs?.some(
+      (addr) =>
+        !isPublishedAddress(addr.server) ||
+        !Number.isInteger(addr.server_port) ||
+        addr.server_port < 1 ||
+        addr.server_port > 65535,
+    )
+  )
+    return t('nodes.invalidPublicAddress')
+  if (
+    portMode.value === 'manual' &&
+    (!Number.isInteger(listen_port) || listen_port < 1 || listen_port > 65535)
+  ) {
     return t('nodeUI.portInvalid')
   }
   return validateTLS()
@@ -582,7 +673,7 @@ function openTLS() {
   tlsOpen.value = true
 }
 
-watch(quicTransport, quic => {
+watch(quicTransport, (quic) => {
   if (!quic) return
   tlsData.value.server.enabled = true
   delete tlsData.value.server.reality
@@ -591,7 +682,8 @@ watch(quicTransport, quic => {
 
 function saveTLS(value: tls) {
   if (props.nodeOverride) value = { ...value, client: tlsData.value.client }
-  sniTouched.value ||= sources.value[sniPath] !== tlsSniSource.value ||
+  sniTouched.value ||=
+    sources.value[sniPath] !== tlsSniSource.value ||
     tlsData.value.server.server_name !== value.server.server_name
   if (tlsSniSource.value) sources.value[sniPath] = tlsSniSource.value
   else delete sources.value[sniPath]
@@ -609,7 +701,8 @@ function save() {
     next['/listen_port'] = { kind: 'node_generated', purpose: 'listen_port' }
   } else {
     delete next['/listen_port']
-    if (props.nodeOverride && portTouched.value) next['/listen_port'] = { kind: 'literal', value: form.value.listen_port }
+    if (props.nodeOverride && portTouched.value)
+      next['/listen_port'] = { kind: 'literal', value: form.value.listen_port }
   }
   if (props.nodeOverride && sniTouched.value && sourceMode(next[sniPath]) === 'manual') {
     next[sniPath] = { kind: 'literal', value: tlsData.value.server.server_name }

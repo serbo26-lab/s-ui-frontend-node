@@ -217,24 +217,159 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import {computed,ref,watch} from 'vue'
-import {useI18n} from 'vue-i18n'
-import {nodeErrorCode} from '@/features/nodes/types/nodeErrors'
-import type {NodeRecord,ResourceBundle} from '@/features/nodes/types/nodes'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { nodeErrorCode } from '@/features/nodes/types/nodeErrors'
+import type { NodeRecord, ResourceBundle } from '@/features/nodes/types/nodes'
 import Nodes from '@/features/nodes/state/nodes'
-import {clone} from '@/features/nodes/types/nodeSpec'
-import {isPublishedAddress} from '@/features/nodes/types/nodeForms'
-const props=defineProps<{visible:boolean;node:NodeRecord;resources:ResourceBundle}>(),emit=defineEmits<{close:[];profiles:[]}>(),store=Nodes(),{t,te}=useI18n()
-const domainVersion=ref(0),certVersion=ref(0)
-const tab=ref('domain'),busy=ref(false),error=ref(''),saved=ref(false),pem=ref(''),key=ref('')
-const domain=ref({mode:'managed',profile_id:0,zone_id:'',prefix:'',automatic_prefix:true,fqdn:'',ip:'',certificate_mode:'auto'}),cert=ref({mode:'auto',email:'',dns_profile_id:0,zone_id:'',certificate_path:'',key_path:''})
-const currentDomain=computed(()=>props.resources.domains.find(d=>d.node_id===props.node.id)),currentCert=computed(()=>props.resources.certificates.find(c=>c.node_id===props.node.id))
-const certModes=computed(()=>[{title:t('nodeUI.automatic'),value:'auto'},{title:t('nodeUI.provided'),value:'provided'},{title:t('nodeUI.nodeFiles'),value:'remote_paths'}])
-const zones=computed(()=>props.resources.dnsprofiles.find(p=>p.id===domain.value.profile_id)?.zones??[]),certZones=computed(()=>props.resources.dnsprofiles.find(p=>p.id===cert.value.dns_profile_id)?.zones??[])
-watch(()=>props.visible,v=>{if(!v){pem.value='';key.value='';return}tab.value='domain';error.value='';saved.value=false;const d=currentDomain.value,c=currentCert.value;domainVersion.value=d?.generation??0;certVersion.value=c?.generation??0;domain.value={mode:d?.mode??'managed',profile_id:d?.profile_id??0,zone_id:d?.zone_id??'',prefix:d?.prefix??'',automatic_prefix:d?.automatic_prefix??true,fqdn:d?.fqdn??'',ip:d?.ip??store.installations.find(i=>i.node_id===props.node.id)?.ip??'',certificate_mode:d?.certificate_mode??'auto'};cert.value={mode:c&&['provided','remote_paths'].includes(c.mode)?c.mode:'auto',email:c?.email??'',dns_profile_id:c?.dns_profile_id??0,zone_id:c?.zone_id??'',certificate_path:c?.certificate_path??'',key_path:c?.key_path??''};pem.value='';key.value=''}, {immediate:true})
-const valid=computed(()=>tab.value==='domain'?!!domain.value.ip&&isPublishedAddress(domain.value.ip)&&(domain.value.mode==='managed'?!!domain.value.profile_id&&!!domain.value.zone_id&&(domain.value.automatic_prefix||!!domain.value.prefix.trim()):!!domain.value.fqdn.trim()):cert.value.mode==='provided'?!!pem.value.trim()&&!!key.value.trim():cert.value.mode==='remote_paths'?cert.value.certificate_path.startsWith('/')&&cert.value.key_path.startsWith('/'):!cert.value.dns_profile_id||!!cert.value.zone_id)
-function message(raw:string){const code=nodeErrorCode(raw);return te('nodeUI.errors.'+code)?t('nodeUI.errors.'+code):t('nodeUI.operationFailed')+' ('+code+')'}
-function status(value:string){return te('nodeUI.states.'+value)?t('nodeUI.states.'+value):value}
-async function save(){busy.value=true;error.value='';saved.value=false;try{const isDomain=tab.value==='domain';const data=isDomain?{...clone(domain.value),node_id:props.node.id,expected_version:domainVersion.value}:{...clone(cert.value),node_id:props.node.id,expected_version:certVersion.value,ca:'letsencrypt',certificate:pem.value,key:key.value};if(await store.resource(isDomain?'domains':'certificates','save',data)){saved.value=true;domainVersion.value=currentDomain.value?.generation??domainVersion.value;certVersion.value=currentCert.value?.generation??certVersion.value;if(isDomain){cert.value.mode=domain.value.certificate_mode;tab.value='cert'}else {pem.value='';key.value=''}}else error.value=message(store.lastSaveError)}finally{busy.value=false}}
-async function renew(){busy.value=true;try{if(!await store.resource('certificates','renew',{node_id:props.node.id,expected_version:certVersion.value}))error.value=message(store.lastSaveError);else {saved.value=true;certVersion.value=currentCert.value?.generation??certVersion.value}}finally{busy.value=false}}
+import { clone } from '@/features/nodes/types/nodeSpec'
+import { isPublishedAddress } from '@/features/nodes/types/nodeForms'
+const props = defineProps<{ visible: boolean; node: NodeRecord; resources: ResourceBundle }>(),
+  emit = defineEmits<{ close: []; profiles: [] }>(),
+  store = Nodes(),
+  { t, te } = useI18n()
+const domainVersion = ref(0),
+  certVersion = ref(0)
+const tab = ref('domain'),
+  busy = ref(false),
+  error = ref(''),
+  saved = ref(false),
+  pem = ref(''),
+  key = ref('')
+const domain = ref({
+    mode: 'managed',
+    profile_id: 0,
+    zone_id: '',
+    prefix: '',
+    automatic_prefix: true,
+    fqdn: '',
+    ip: '',
+    certificate_mode: 'auto',
+  }),
+  cert = ref({ mode: 'auto', email: '', dns_profile_id: 0, zone_id: '', certificate_path: '', key_path: '' })
+const currentDomain = computed(() => props.resources.domains.find((d) => d.node_id === props.node.id)),
+  currentCert = computed(() => props.resources.certificates.find((c) => c.node_id === props.node.id))
+const certModes = computed(() => [
+  { title: t('nodeUI.automatic'), value: 'auto' },
+  { title: t('nodeUI.provided'), value: 'provided' },
+  { title: t('nodeUI.nodeFiles'), value: 'remote_paths' },
+])
+const zones = computed(
+    () => props.resources.dnsprofiles.find((p) => p.id === domain.value.profile_id)?.zones ?? [],
+  ),
+  certZones = computed(
+    () => props.resources.dnsprofiles.find((p) => p.id === cert.value.dns_profile_id)?.zones ?? [],
+  )
+watch(
+  () => props.visible,
+  (v) => {
+    if (!v) {
+      pem.value = ''
+      key.value = ''
+      return
+    }
+    tab.value = 'domain'
+    error.value = ''
+    saved.value = false
+    const d = currentDomain.value,
+      c = currentCert.value
+    domainVersion.value = d?.generation ?? 0
+    certVersion.value = c?.generation ?? 0
+    domain.value = {
+      mode: d?.mode ?? 'managed',
+      profile_id: d?.profile_id ?? 0,
+      zone_id: d?.zone_id ?? '',
+      prefix: d?.prefix ?? '',
+      automatic_prefix: d?.automatic_prefix ?? true,
+      fqdn: d?.fqdn ?? '',
+      ip: d?.ip ?? store.installations.find((i) => i.node_id === props.node.id)?.ip ?? '',
+      certificate_mode: d?.certificate_mode ?? 'auto',
+    }
+    cert.value = {
+      mode: c && ['provided', 'remote_paths'].includes(c.mode) ? c.mode : 'auto',
+      email: c?.email ?? '',
+      dns_profile_id: c?.dns_profile_id ?? 0,
+      zone_id: c?.zone_id ?? '',
+      certificate_path: c?.certificate_path ?? '',
+      key_path: c?.key_path ?? '',
+    }
+    pem.value = ''
+    key.value = ''
+  },
+  { immediate: true },
+)
+const valid = computed(() => {
+  if (tab.value === 'domain') {
+    const dnsReady =
+      domain.value.mode === 'managed'
+        ? !!domain.value.profile_id &&
+          !!domain.value.zone_id &&
+          (domain.value.automatic_prefix || !!domain.value.prefix.trim())
+        : !!domain.value.fqdn.trim()
+    return !!domain.value.ip && isPublishedAddress(domain.value.ip) && dnsReady
+  }
+  if (cert.value.mode === 'provided') return !!pem.value.trim() && !!key.value.trim()
+  if (cert.value.mode === 'remote_paths')
+    return cert.value.certificate_path.startsWith('/') && cert.value.key_path.startsWith('/')
+  return !cert.value.dns_profile_id || !!cert.value.zone_id
+})
+function message(raw: string) {
+  const code = nodeErrorCode(raw)
+  return te('nodeUI.errors.' + code)
+    ? t('nodeUI.errors.' + code)
+    : t('nodeUI.operationFailed') + ' (' + code + ')'
+}
+function status(value: string) {
+  return te('nodeUI.states.' + value) ? t('nodeUI.states.' + value) : value
+}
+async function save() {
+  busy.value = true
+  error.value = ''
+  saved.value = false
+  try {
+    const isDomain = tab.value === 'domain'
+    const data = isDomain
+      ? { ...clone(domain.value), node_id: props.node.id, expected_version: domainVersion.value }
+      : {
+          ...clone(cert.value),
+          node_id: props.node.id,
+          expected_version: certVersion.value,
+          ca: 'letsencrypt',
+          certificate: pem.value,
+          key: key.value,
+        }
+    if (await store.resource(isDomain ? 'domains' : 'certificates', 'save', data)) {
+      saved.value = true
+      domainVersion.value = currentDomain.value?.generation ?? domainVersion.value
+      certVersion.value = currentCert.value?.generation ?? certVersion.value
+      if (isDomain) {
+        cert.value.mode = domain.value.certificate_mode
+        tab.value = 'cert'
+      } else {
+        pem.value = ''
+        key.value = ''
+      }
+    } else error.value = message(store.lastSaveError)
+  } finally {
+    busy.value = false
+  }
+}
+async function renew() {
+  busy.value = true
+  try {
+    if (
+      !(await store.resource('certificates', 'renew', {
+        node_id: props.node.id,
+        expected_version: certVersion.value,
+      }))
+    )
+      error.value = message(store.lastSaveError)
+    else {
+      saved.value = true
+      certVersion.value = currentCert.value?.generation ?? certVersion.value
+    }
+  } finally {
+    busy.value = false
+  }
+}
 </script>

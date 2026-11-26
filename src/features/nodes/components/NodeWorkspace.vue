@@ -733,16 +733,24 @@
   </div>
 </template>
 <script setup lang="ts">
-import {computed,onMounted,onUnmounted,ref} from 'vue'
-import {useI18n} from 'vue-i18n'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import Nodes from '@/features/nodes/state/nodes'
 import Data from '@/store/modules/data'
 import Stats from '@/layouts/modals/Stats.vue'
 import Http from '@/plugins/httputil'
-import {nodeErrorCode} from '@/features/nodes/types/nodeErrors'
-import type {NodeTemplate,DNSProfile,NodeWorkspace as Workspace,SpecEntry,NodeRecord,NodeProvisionRequest,TemplateSpec} from '@/features/nodes/types/nodes'
-import {clone,inboundTemplateTitle,overrideFromEntry,setPath} from '@/features/nodes/types/nodeSpec'
-import {nodeStatus} from '@/features/nodes/types/nodeForms'
+import { nodeErrorCode } from '@/features/nodes/types/nodeErrors'
+import type {
+  NodeTemplate,
+  DNSProfile,
+  NodeWorkspace as Workspace,
+  SpecEntry,
+  NodeRecord,
+  NodeProvisionRequest,
+  TemplateSpec,
+} from '@/features/nodes/types/nodes'
+import { clone, inboundTemplateTitle, overrideFromEntry, setPath } from '@/features/nodes/types/nodeSpec'
+import { nodeStatus } from '@/features/nodes/types/nodeForms'
 import NodeHostSetup from '@/features/nodes/dialogs/NodeHostSetup.vue'
 import NodeCertificateState from './NodeCertificateState.vue'
 import NodeOperationStatus from './NodeOperationStatus.vue'
@@ -751,23 +759,51 @@ import NodeLiveTemplate from '@/features/nodes/dialogs/NodeLiveTemplate.vue'
 import NodeDNSProfile from '@/features/nodes/dialogs/NodeDNSProfile.vue'
 import NodeResources from '@/features/nodes/dialogs/NodeResources.vue'
 import NodeSpecEntry from '@/features/nodes/dialogs/NodeSpecEntry.vue'
-const store=Nodes(),{t,te}=useI18n(),tab=ref('nodes'),detailOpen=ref(false),selectedId=ref(0),busy=ref(false),error=ref(''),clock=ref(Date.now()/1000),workspace=ref<Workspace>(),workspaceFailed=ref(false)
+const store = Nodes(),
+  { t, te } = useI18n(),
+  tab = ref('nodes'),
+  detailOpen = ref(false),
+  selectedId = ref(0),
+  busy = ref(false),
+  error = ref(''),
+  clock = ref(Date.now() / 1000),
+  workspace = ref<Workspace>(),
+  workspaceFailed = ref(false)
 const data = Data()
 const trafficNode = ref<NodeRecord>()
-const hostOpen=ref(false),hostRecover=ref(false),hostNode=ref<NodeRecord>(),hostClone=ref<NodeRecord>(),hostError=ref('')
-function nodeJob(id?:number){return store.nodejobs.filter(j=>j.node_id===id&&j.model_version===2).sort((a,b)=>b.created-a.created||b.updated-a.updated)[0]}
-function activeNodeJob(id?:number){const job=nodeJob(id);return job&&['queued','running'].includes(job.state)?job:undefined}
-const latestJob=computed(()=>nodeJob(selectedId.value)),selectedInstalling=computed(()=>!!activeNodeJob(selectedId.value))
-const jobStages = computed(() => (latestJob.value?.events ?? []).filter((event, index, events) => {
-  const previous = events[index - 1]
-  return !previous || previous.stage !== event.stage || previous.state !== event.state || previous.error !== event.error
-}))
-const togglingNode=ref<number>()
+const hostOpen = ref(false),
+  hostRecover = ref(false),
+  hostNode = ref<NodeRecord>(),
+  hostClone = ref<NodeRecord>(),
+  hostError = ref('')
+function nodeJob(id?: number) {
+  return store.nodejobs
+    .filter((j) => j.node_id === id && j.model_version === 2)
+    .sort((a, b) => b.created - a.created || b.updated - a.updated)[0]
+}
+function activeNodeJob(id?: number) {
+  const job = nodeJob(id)
+  return job && ['queued', 'running'].includes(job.state) ? job : undefined
+}
+const latestJob = computed(() => nodeJob(selectedId.value)),
+  selectedInstalling = computed(() => !!activeNodeJob(selectedId.value))
+const jobStages = computed(() =>
+  (latestJob.value?.events ?? []).filter((event, index, events) => {
+    const previous = events[index - 1]
+    return (
+      !previous ||
+      previous.stage !== event.stage ||
+      previous.state !== event.state ||
+      previous.error !== event.error
+    )
+  }),
+)
+const togglingNode = ref<number>()
 function domainError(id?: number) {
-  return store.resources.domains.find(domain => domain.node_id === id)?.last_error
+  return store.resources.domains.find((domain) => domain.node_id === id)?.last_error
 }
 function certificateError(id?: number) {
-  const error = store.resources.certificates.find(certificate => certificate.node_id === id)?.last_error
+  const error = store.resources.certificates.find((certificate) => certificate.node_id === id)?.last_error
   return error === 'certificate_pending' ? undefined : error
 }
 function cardState(node: NodeRecord) {
@@ -788,74 +824,205 @@ const selectedProblems = computed(() => {
   return [
     ...(domain ? [t('setting.domain') + ': ' + message(domain)] : []),
     ...(certificate ? [t('tls.cert') + ': ' + message(certificate)] : []),
-    ...(structural && !selectedInstalling.value && !((domain || certificate || waitingFor.value) && structural==='structural_update_failed') ? [message(structural)] : []),
+    ...(structural &&
+    !selectedInstalling.value &&
+    !((domain || certificate || waitingFor.value) && structural === 'structural_update_failed')
+      ? [message(structural)]
+      : []),
     ...(accessError ? [message(accessError)] : []),
   ]
 })
-let hostTrigger:HTMLElement|undefined, detailTrigger:HTMLElement|undefined
-function openDetails(id:number) {
-  detailTrigger=document.activeElement instanceof HTMLElement?document.activeElement:undefined
+let hostTrigger: HTMLElement | undefined, detailTrigger: HTMLElement | undefined
+function openDetails(id: number) {
+  detailTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : undefined
   select(id)
 }
-function restoreDetailFocus(){if(detailTrigger?.isConnected)detailTrigger.focus({preventScroll:true})}
-function restoreHostFocus(){if(hostTrigger?.isConnected)hostTrigger.focus({preventScroll:true})}
-function openHost(node?:NodeRecord,recover=false,copy?:NodeRecord){hostClone.value=copy;hostTrigger=document.activeElement instanceof HTMLElement?document.activeElement:undefined;hostNode.value=node?clone(node):undefined;hostRecover.value=recover;hostError.value='';hostOpen.value=true}
-async function saveHost(request:NodeProvisionRequest){busy.value=true;hostError.value='';try{const job=await store.provision(request);if(!alive)return;if(job){if(!detailOpen.value){detailTrigger=hostTrigger;hostTrigger=undefined}hostOpen.value=false;select(job.node_id)}else hostError.value=message(store.lastSaveError||'request_failed')}finally{busy.value=false}}
-const templateOpen=ref(false),editingTemplate=ref<NodeTemplate>(),profileOpen=ref(false),editingProfile=ref<DNSProfile>(),resourceOpen=ref(false),overrideOpen=ref(false),editingEntry=ref<SpecEntry>(),overrideVersion=ref(0)
-const deleteTarget=ref('');let confirmAction:()=>Promise<void>=async()=>{},workspaceTicket=0,alive=true
+function restoreDetailFocus() {
+  if (detailTrigger?.isConnected) detailTrigger.focus({ preventScroll: true })
+}
+function restoreHostFocus() {
+  if (hostTrigger?.isConnected) hostTrigger.focus({ preventScroll: true })
+}
+function openHost(node?: NodeRecord, recover = false, copy?: NodeRecord) {
+  hostClone.value = copy
+  hostTrigger = document.activeElement instanceof HTMLElement ? document.activeElement : undefined
+  hostNode.value = node ? clone(node) : undefined
+  hostRecover.value = recover
+  hostError.value = ''
+  hostOpen.value = true
+}
+async function saveHost(request: NodeProvisionRequest) {
+  busy.value = true
+  hostError.value = ''
+  try {
+    const job = await store.provision(request)
+    if (!alive) return
+    if (job) {
+      if (!detailOpen.value) {
+        detailTrigger = hostTrigger
+        hostTrigger = undefined
+      }
+      hostOpen.value = false
+      select(job.node_id)
+    } else hostError.value = message(store.lastSaveError || 'request_failed')
+  } finally {
+    busy.value = false
+  }
+}
+const templateOpen = ref(false),
+  editingTemplate = ref<NodeTemplate>(),
+  profileOpen = ref(false),
+  editingProfile = ref<DNSProfile>(),
+  resourceOpen = ref(false),
+  overrideOpen = ref(false),
+  editingEntry = ref<SpecEntry>(),
+  overrideVersion = ref(0)
+const deleteTarget = ref('')
+let confirmAction: () => Promise<void> = async () => {},
+  workspaceTicket = 0,
+  alive = true
 const dnsAlreadyRemoved = ref(false)
 const serverAlreadyStopped = ref(false)
 const allowDnsConfirmation = ref(false)
 const dnsCleanupErrors = new Set([
-  'dns_api_rejected', 'dns_api_unreachable', 'dns_state_key_unavailable',
-  'dns_profile_secret_mismatch', 'dns_record_ownership_changed',
+  'dns_api_rejected',
+  'dns_api_unreachable',
+  'dns_state_key_unavailable',
+  'dns_profile_secret_mismatch',
+  'dns_record_ownership_changed',
 ])
-const selected=computed(()=>store.nodes.find(n=>n.id===selectedId.value))
-const access=computed(()=>store.nodeaccess.find(a=>a.node_id===selectedId.value))
-const selectedDomain = computed(() => store.resources.domains.find(domain => domain.node_id === selectedId.value))
-const selectedCertificate = computed(() => store.resources.certificates.find(certificate => certificate.node_id === selectedId.value))
-const structureTask = computed(() => workspace.value?.tasks.find(task => task.kind === 'structure'))
-const isLiveNode=computed(()=>selected.value?.assignment_mode==='node'&&selected.value.agent_protocol===2)
-const catalog=computed(()=>store.templates.filter(template=>template.kind==='inbound'))
-const availableInbounds=computed(()=>catalog.value.filter(template=>template.scope!=='private'||template.owner_node_id===selectedId.value)
-  .map(template=>({title:inboundTemplateTitle(template),value:template.id!})))
-const detailTab=ref('inbounds')
-const selectedInboundIds=ref<number[]>([])
-const selectionVersion=ref(0)
-const selectionChanged=computed(()=>JSON.stringify(selectedInboundIds.value)!==JSON.stringify(selected.value?.inbound_template_ids??[]))
-const detourTargets = computed(() => (workspace.value?.spec?.entries ?? [])
-  .filter(entry => entry.enable && entry.protocol === 'vless' && entry.connection_key !== editingEntry.value?.connection_key)
-  .filter(entry => {
-    const transport = workspace.value?.connections.find(connection => connection.connection_key === entry.connection_key)?.options.transport
-    return (transport as {type?: string} | undefined)?.type !== 'quic'
-  })
-  .map(entry => ({title: entry.name, value: entry.connection_key})))
-const waitingFor = computed(() => structureTask.value?.state === 'waiting' ? structureTask.value.last_error : undefined)
+const selected = computed(() => store.nodes.find((n) => n.id === selectedId.value))
+const access = computed(() => store.nodeaccess.find((a) => a.node_id === selectedId.value))
+const selectedDomain = computed(() =>
+  store.resources.domains.find((domain) => domain.node_id === selectedId.value),
+)
+const selectedCertificate = computed(() =>
+  store.resources.certificates.find((certificate) => certificate.node_id === selectedId.value),
+)
+const structureTask = computed(() => workspace.value?.tasks.find((task) => task.kind === 'structure'))
+const isLiveNode = computed(
+  () => selected.value?.assignment_mode === 'node' && selected.value.agent_protocol === 2,
+)
+const catalog = computed(() => store.templates.filter((template) => template.kind === 'inbound'))
+const availableInbounds = computed(() =>
+  catalog.value
+    .filter((template) => template.scope !== 'private' || template.owner_node_id === selectedId.value)
+    .map((template) => ({ title: inboundTemplateTitle(template), value: template.id! })),
+)
+const detailTab = ref('inbounds')
+const selectedInboundIds = ref<number[]>([])
+const selectionVersion = ref(0)
+const selectionChanged = computed(
+  () =>
+    JSON.stringify(selectedInboundIds.value) !== JSON.stringify(selected.value?.inbound_template_ids ?? []),
+)
+const detourTargets = computed(() =>
+  (workspace.value?.spec?.entries ?? [])
+    .filter(
+      (entry) =>
+        entry.enable &&
+        entry.protocol === 'vless' &&
+        entry.connection_key !== editingEntry.value?.connection_key,
+    )
+    .filter((entry) => {
+      const transport = workspace.value?.connections.find(
+        (connection) => connection.connection_key === entry.connection_key,
+      )?.options.transport
+      return (transport as { type?: string } | undefined)?.type !== 'quic'
+    })
+    .map((entry) => ({ title: entry.name, value: entry.connection_key })),
+)
+const waitingFor = computed(() =>
+  structureTask.value?.state === 'waiting' ? structureTask.value.last_error : undefined,
+)
 const canRetry = computed(() => !!(selectedProblems.value.length || waitingFor.value))
-function message(raw:string){const code=nodeErrorCode(raw);return te('nodeUI.errors.'+code)?t('nodeUI.errors.'+code):t('nodeUI.operationFailed')+' ('+code+')'}
-function entryOverrides(key:string){return workspace.value?.overrides.filter(o=>o.connection_key===key)??[]}
-function connectionPort(key: string) {
-  return workspace.value?.connections.find(connection => connection.connection_key === key && !connection.retired)?.options.listen_port
+function message(raw: string) {
+  const code = nodeErrorCode(raw)
+  return te('nodeUI.errors.' + code)
+    ? t('nodeUI.errors.' + code)
+    : t('nodeUI.operationFailed') + ' (' + code + ')'
 }
-async function loadWorkspace(){if(!alive||!detailOpen.value||!selectedId.value)return;const id=selectedId.value,ticket=++workspaceTicket;try{const r=await Http.get<Workspace>('api/node-workspace',{id});if(alive&&ticket===workspaceTicket){if(r.success){for(const entry of r.obj.spec?.entries??[])entry.sources??={};workspace.value=r.obj;workspaceFailed.value=false}else workspaceFailed.value=true}}catch{if(alive&&ticket===workspaceTicket)workspaceFailed.value=true}}
-async function refresh(){await Promise.all([store.load(),store.loadResources()]);if(!busy.value&&!overrideOpen.value)await loadWorkspace()}
-function select(id:number){
-  selectedId.value=id
-  detailOpen.value=true
-  detailTab.value='inbounds'
-  workspace.value=undefined
-  workspaceFailed.value=false
-  selectedInboundIds.value=[...(selected.value?.inbound_template_ids??[])]
-  selectionVersion.value=selected.value?.settings_version??0
-  error.value=''
+function entryOverrides(key: string) {
+  return workspace.value?.overrides.filter((o) => o.connection_key === key) ?? []
+}
+function connectionPort(key: string) {
+  return workspace.value?.connections.find(
+    (connection) => connection.connection_key === key && !connection.retired,
+  )?.options.listen_port
+}
+async function loadWorkspace() {
+  if (!alive || !detailOpen.value || !selectedId.value) return
+  const id = selectedId.value,
+    ticket = ++workspaceTicket
+  try {
+    const r = await Http.get<Workspace>('api/node-workspace', { id })
+    if (alive && ticket === workspaceTicket) {
+      if (r.success) {
+        for (const entry of r.obj.spec?.entries ?? []) entry.sources ??= {}
+        workspace.value = r.obj
+        workspaceFailed.value = false
+      } else workspaceFailed.value = true
+    }
+  } catch {
+    if (alive && ticket === workspaceTicket) workspaceFailed.value = true
+  }
+}
+async function refresh() {
+  await Promise.all([store.load(), store.loadResources()])
+  if (!busy.value && !overrideOpen.value) await loadWorkspace()
+}
+function select(id: number) {
+  selectedId.value = id
+  detailOpen.value = true
+  detailTab.value = 'inbounds'
+  workspace.value = undefined
+  workspaceFailed.value = false
+  selectedInboundIds.value = [...(selected.value?.inbound_template_ids ?? [])]
+  selectionVersion.value = selected.value?.settings_version ?? 0
+  error.value = ''
   void loadWorkspace()
 }
-async function perform(fn:()=>Promise<boolean>){busy.value=true;error.value='';try{const ok=await fn();if(!ok)error.value=message(store.lastSaveError||'request_failed');return ok}finally{busy.value=false;await refresh()}}
-function openTemplate(value?:NodeTemplate){editingTemplate.value=value?clone(value):undefined;error.value='';templateOpen.value=true}
-async function saveTemplate(value:unknown){if(await perform(()=>store.save('nodetemplates',editingTemplate.value?'edit':'new',value)))templateOpen.value=false}
-async function restoreTemplate(version:number){if(await perform(()=>store.save('nodetemplates','restoreversion',{id:editingTemplate.value!.id,version,expected_version:editingTemplate.value!.version})))templateOpen.value=false}
-function openProfile(value?:DNSProfile){editingProfile.value=value?clone(value):undefined;error.value='';profileOpen.value=true}
-async function saveProfile(value:unknown){if(await perform(()=>store.resource('dnsprofiles','save',value)))profileOpen.value=false}
+async function perform(fn: () => Promise<boolean>) {
+  busy.value = true
+  error.value = ''
+  try {
+    const ok = await fn()
+    if (!ok) error.value = message(store.lastSaveError || 'request_failed')
+    return ok
+  } finally {
+    busy.value = false
+    await refresh()
+  }
+}
+function openTemplate(value?: NodeTemplate) {
+  editingTemplate.value = value ? clone(value) : undefined
+  error.value = ''
+  templateOpen.value = true
+}
+async function saveTemplate(value: unknown) {
+  if (await perform(() => store.save('nodetemplates', editingTemplate.value ? 'edit' : 'new', value)))
+    templateOpen.value = false
+}
+async function restoreTemplate(version: number) {
+  if (
+    await perform(() =>
+      store.save('nodetemplates', 'restoreversion', {
+        id: editingTemplate.value!.id,
+        version,
+        expected_version: editingTemplate.value!.version,
+      }),
+    )
+  )
+    templateOpen.value = false
+}
+function openProfile(value?: DNSProfile) {
+  editingProfile.value = value ? clone(value) : undefined
+  error.value = ''
+  profileOpen.value = true
+}
+async function saveProfile(value: unknown) {
+  if (await perform(() => store.resource('dnsprofiles', 'save', value))) profileOpen.value = false
+}
 function confirm(target: string, action: () => Promise<void>) {
   closeDelete()
   deleteTarget.value = target
@@ -878,7 +1045,11 @@ function removeTemplate(value: NodeTemplate) {
 
 function removeProfile(value: DNSProfile) {
   confirm('dns-' + value.id, async () => {
-    if (await perform(() => store.resource('dnsprofiles', 'del', { id: value.id, expected_version: value.version }))) {
+    if (
+      await perform(() =>
+        store.resource('dnsprofiles', 'del', { id: value.id, expected_version: value.version }),
+      )
+    ) {
       closeDelete()
     }
   })
@@ -906,15 +1077,15 @@ function removeNode(node: NodeRecord) {
   })
 }
 
-function copyName(name: string, existing: readonly {name: string}[]) {
+function copyName(name: string, existing: readonly { name: string }[]) {
   let result = name + '-copy'
-  while (existing.some(item => item.name === result)) result += '-copy'
+  while (existing.some((item) => item.name === result)) result += '-copy'
   return result
 }
 
 async function cloneTemplate(template: NodeTemplate) {
   await perform(async () => {
-    const result = await Http.get<{spec: TemplateSpec}>('api/node-template-version', {id: template.id!})
+    const result = await Http.get<{ spec: TemplateSpec }>('api/node-template-version', { id: template.id! })
     const original = result.success ? result.obj.spec.entries[0] : undefined
     if (!original) {
       store.lastSaveError = result.msg || 'request_failed'
@@ -924,7 +1095,7 @@ async function cloneTemplate(template: NodeTemplate) {
     entry.connection_key = crypto.randomUUID()
     entry.name = copyName(template.name, catalog.value)
     entry.sources ??= {}
-    entry.sources['/listen_port'] = {kind: 'node_generated', purpose: 'listen_port'}
+    entry.sources['/listen_port'] = { kind: 'node_generated', purpose: 'listen_port' }
     delete entry.options.listen_port
     delete entry.options.detour
     delete entry.options.realm
@@ -935,32 +1106,47 @@ async function cloneTemplate(template: NodeTemplate) {
       delete entry.client_options.realm
     }
     return store.save('nodetemplates', 'new', {
-      name: entry.name, kind: 'inbound', expected_version: 0,
-      scope: template.scope, owner_node_id: template.owner_node_id,
-      spec: {...result.obj.spec, entries: [entry]},
+      name: entry.name,
+      kind: 'inbound',
+      expected_version: 0,
+      scope: template.scope,
+      owner_node_id: template.owner_node_id,
+      spec: { ...result.obj.spec, entries: [entry] },
     })
   })
 }
 
 function cloneProfile(profile: DNSProfile) {
-  openProfile({...clone(profile), id: undefined, name: copyName(profile.name, store.resources.dnsprofiles), version: 0, secret_configured: false})
+  openProfile({
+    ...clone(profile),
+    id: undefined,
+    name: copyName(profile.name, store.resources.dnsprofiles),
+    version: 0,
+    secret_configured: false,
+  })
 }
 
-async function applyInbounds(){
-  const ok=await perform(()=>store.save('nodes','selectinbounds',{id:selectedId.value,inbound_template_ids:selectedInboundIds.value,expected_version:selectionVersion.value}))
-  if(ok) selectionVersion.value=selected.value?.settings_version??0
+async function applyInbounds() {
+  const ok = await perform(() =>
+    store.save('nodes', 'selectinbounds', {
+      id: selectedId.value,
+      inbound_template_ids: selectedInboundIds.value,
+      expected_version: selectionVersion.value,
+    }),
+  )
+  if (ok) selectionVersion.value = selected.value?.settings_version ?? 0
 }
 function canToggleNode(node: NodeRecord) {
-  return node.assignment_mode==='node' && node.agent_protocol===2 && !activeNodeJob(node.id)
+  return node.assignment_mode === 'node' && node.agent_protocol === 2 && !activeNodeJob(node.id)
 }
 
 async function toggleNode(node: NodeRecord, enable: boolean) {
-  if (busy.value || !canToggleNode(node) || node.enable===enable) return
-  togglingNode.value=node.id
+  if (busy.value || !canToggleNode(node) || node.enable === enable) return
+  togglingNode.value = node.id
   try {
-    await perform(()=>store.save('nodes','edit',{id:node.id,enable}))
+    await perform(() => store.save('nodes', 'edit', { id: node.id, enable }))
   } finally {
-    togglingNode.value=undefined
+    togglingNode.value = undefined
   }
 }
 function openOverride(base: SpecEntry) {
@@ -975,17 +1161,67 @@ function openOverride(base: SpecEntry) {
     else if (override.source) entry.sources[override.path] = clone(override.source)
   }
   if (entry.sources['/listen_port']?.kind === 'node_generated') {
-    const applied = workspace.value?.connections.find(connection => connection.connection_key === entry.connection_key)
+    const applied = workspace.value?.connections.find(
+      (connection) => connection.connection_key === entry.connection_key,
+    )
     if (applied?.options.listen_port) entry.options.listen_port = applied.options.listen_port
   }
   editingEntry.value = entry
   overrideVersion.value = selected.value?.settings_version ?? 0
   overrideOpen.value = true
 }
-async function saveOverride(entry:SpecEntry){const base=workspace.value?.spec?.entries.find(e=>e.connection_key===entry.connection_key);if(!base)return;if(JSON.stringify(base.client_tls??{})!==JSON.stringify(entry.client_tls??{})){error.value=t('nodeUI.clientTLSInTemplate');return}const rows=new Map(entryOverrides(entry.connection_key).map(o=>[o.path,o]));for(const row of overrideFromEntry(base,entry))rows.set(row.path,row);const overrides=[...(workspace.value?.overrides.filter(o=>o.connection_key!==entry.connection_key)??[]),...rows.values()];if(await perform(()=>store.save('nodes','setoverrides',{id:selectedId.value,expected_version:overrideVersion.value,overrides})))overrideOpen.value=false}
-async function resetOverride(key:string){await perform(()=>store.save('nodes','setoverrides',{id:selectedId.value,expected_version:selected.value?.settings_version??0,overrides:workspace.value?.overrides.filter(o=>o.connection_key!==key)??[]}))}
-async function retry(){await perform(async()=>{const a=await store.save('nodes','retry',{id:selectedId.value});if(store.resources.domains.some(d=>d.node_id===selectedId.value))await Http.post('api/node-resource-retry',{data:JSON.stringify({node_id:selectedId.value})});return a})}
-let timer:ReturnType<typeof setInterval>|undefined
-onMounted(()=>{void refresh();timer=setInterval(()=>{clock.value=Date.now()/1000;void refresh()},5000)})
-onUnmounted(()=>{alive=false;workspaceTicket++;if(timer)clearInterval(timer)})
+async function saveOverride(entry: SpecEntry) {
+  const base = workspace.value?.spec?.entries.find((e) => e.connection_key === entry.connection_key)
+  if (!base) return
+  if (JSON.stringify(base.client_tls ?? {}) !== JSON.stringify(entry.client_tls ?? {})) {
+    error.value = t('nodeUI.clientTLSInTemplate')
+    return
+  }
+  const rows = new Map(entryOverrides(entry.connection_key).map((o) => [o.path, o]))
+  for (const row of overrideFromEntry(base, entry)) rows.set(row.path, row)
+  const overrides = [
+    ...(workspace.value?.overrides.filter((o) => o.connection_key !== entry.connection_key) ?? []),
+    ...rows.values(),
+  ]
+  if (
+    await perform(() =>
+      store.save('nodes', 'setoverrides', {
+        id: selectedId.value,
+        expected_version: overrideVersion.value,
+        overrides,
+      }),
+    )
+  )
+    overrideOpen.value = false
+}
+async function resetOverride(key: string) {
+  await perform(() =>
+    store.save('nodes', 'setoverrides', {
+      id: selectedId.value,
+      expected_version: selected.value?.settings_version ?? 0,
+      overrides: workspace.value?.overrides.filter((o) => o.connection_key !== key) ?? [],
+    }),
+  )
+}
+async function retry() {
+  await perform(async () => {
+    const a = await store.save('nodes', 'retry', { id: selectedId.value })
+    if (store.resources.domains.some((d) => d.node_id === selectedId.value))
+      await Http.post('api/node-resource-retry', { data: JSON.stringify({ node_id: selectedId.value }) })
+    return a
+  })
+}
+let timer: ReturnType<typeof setInterval> | undefined
+onMounted(() => {
+  void refresh()
+  timer = setInterval(() => {
+    clock.value = Date.now() / 1000
+    void refresh()
+  }, 5000)
+})
+onUnmounted(() => {
+  alive = false
+  workspaceTicket++
+  if (timer) clearInterval(timer)
+})
 </script>

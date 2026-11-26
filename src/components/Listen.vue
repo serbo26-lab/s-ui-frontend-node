@@ -267,7 +267,8 @@ const optionDetour = computed({
   get: (): boolean => data.value.detour != undefined,
   set: (v: boolean) => {
     const first = inTags[0]
-    data.value.detour = v ? (typeof first === 'string' ? first : first?.value ?? '') : undefined
+    if (!v) data.value.detour = undefined
+    else data.value.detour = typeof first === 'string' ? first : first?.value ?? ''
   },
 })
 

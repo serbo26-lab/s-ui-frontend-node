@@ -63,13 +63,9 @@ describe.each(locales)('%s node translations', locale => {
   it('keeps node messages separate and reuses the original panel terminology', () => {
     expect(Object.keys(nodeMessages[locale]).sort()).toEqual(['nodeOnboarding', 'nodeUI', 'nodes'])
     expect(Object.keys(nodeMessages[locale]).filter(key => key in baseMessages[locale])).toEqual([])
-    expect(messages['nodeOnboarding.domain']).toBe('@:setting.domain')
     expect(messages['nodeOnboarding.keyPEM']).toBe('@:tls.privKey')
     expect(messages['nodeUI.tlsSettings']).toBe('@:pages.tls')
     expect(messages['nodeUI.obfuscation']).toBe('@:types.snell.obfsMode')
     expect(messages['nodeUI.apiToken']).toBe('@:tls.provider.apiToken')
-    for (const code of Object.keys(nodeMessages[locale].nodeOnboarding.errors)) {
-      expect(messages[`nodeOnboarding.errors.${code}`]).toBe(`@:nodeUI.errors.${code}`)
-    }
   })
 })

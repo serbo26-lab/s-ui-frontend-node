@@ -117,7 +117,9 @@ watch(() => props.visible, (v) => {
 })
 
 function backup() {
-  const params=new URLSearchParams();if(exclude.value.length)params.set('exclude',exclude.value.join(','));if(fullBackup.value)params.set('format','archive')
+  const params = new URLSearchParams()
+  if (exclude.value.length) params.set('exclude', exclude.value.join(','))
+  if (fullBackup.value) params.set('format', 'archive')
   const excludeOption=params.size?'?'+params.toString():''
   window.location.href = 'api/getdb' + excludeOption
 }

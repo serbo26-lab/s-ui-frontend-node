@@ -127,17 +127,80 @@
   </v-dialog>
 </template>
 <script setup lang="ts">
-import {computed,ref,watch} from 'vue'
-import {useI18n} from 'vue-i18n'
-import type {DNSProfile} from '@/features/nodes/types/nodes'
-import {clone} from '@/features/nodes/types/nodeSpec'
+import { computed, ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import type { DNSProfile } from '@/features/nodes/types/nodes'
+import { clone } from '@/features/nodes/types/nodeSpec'
 import Http from '@/plugins/httputil'
-const props=defineProps<{visible:boolean;value?:DNSProfile;busy:boolean;error:string}>(),emit=defineEmits<{close:[];save:[unknown]}>(),{t}=useI18n()
-const blank=():DNSProfile=>({name:'',auth_type:'token',email:'',zones:[],version:0}),form=ref(blank()),secret=ref(''),available=ref<DNSProfile['zones']>([]),selected=ref<string[]>([]),discovering=ref(false),localError=ref('')
-let ticket=0
-watch(()=>props.visible,v=>{ticket++;discovering.value=false;secret.value='';localError.value='';if(v){form.value=clone(props.value??blank());available.value=clone(form.value.zones);selected.value=form.value.zones.map(z=>z.id)}})
-const valid=computed(()=>form.value.name.trim()&&form.value.zones.length&&form.value.zones.every(z=>/^[0-9a-f]{32}$/.test(z.id)&&z.name.includes('.'))&&(secret.value||props.value?.secret_configured&&props.value.auth_type===form.value.auth_type&&(props.value.email??'')===(form.value.email??'')))
-async function discover(){discovering.value=true;localError.value='';const n=ticket;try{const r=await Http.post<DNSProfile['zones']>('api/node-dns-zones',{data:JSON.stringify({id:form.value.id,auth_type:form.value.auth_type,email:form.value.email??'',token:form.value.auth_type==='token'?secret.value:'',api_key:form.value.auth_type==='global_key'?secret.value:''})});if(n!==ticket)return;if(r.success)available.value=r.obj;else localError.value=t('nodeUI.zoneLookupFailed')}catch{if(n===ticket)localError.value=t('nodes.loadFailed')}finally{if(n===ticket)discovering.value=false}}
-function syncZones(){form.value.zones=available.value.filter(z=>selected.value.includes(z.id))}
-function save(){emit('save',{...form.value,expected_version:form.value.version,version:undefined,secret_configured:undefined,provider:undefined,...(form.value.auth_type==='token'?{token:secret.value}:{api_key:secret.value})})}
+const props = defineProps<{ visible: boolean; value?: DNSProfile; busy: boolean; error: string }>(),
+  emit = defineEmits<{ close: []; save: [unknown] }>(),
+  { t } = useI18n()
+const blank = (): DNSProfile => ({ name: '', auth_type: 'token', email: '', zones: [], version: 0 }),
+  form = ref(blank()),
+  secret = ref(''),
+  available = ref<DNSProfile['zones']>([]),
+  selected = ref<string[]>([]),
+  discovering = ref(false),
+  localError = ref('')
+let ticket = 0
+watch(
+  () => props.visible,
+  (v) => {
+    ticket++
+    discovering.value = false
+    secret.value = ''
+    localError.value = ''
+    if (v) {
+      form.value = clone(props.value ?? blank())
+      available.value = clone(form.value.zones)
+      selected.value = form.value.zones.map((z) => z.id)
+    }
+  },
+)
+const valid = computed(
+  () =>
+    form.value.name.trim() &&
+    form.value.zones.length &&
+    form.value.zones.every((z) => /^[0-9a-f]{32}$/.test(z.id) && z.name.includes('.')) &&
+    (secret.value ||
+      (props.value?.secret_configured &&
+        props.value.auth_type === form.value.auth_type &&
+        (props.value.email ?? '') === (form.value.email ?? ''))),
+)
+async function discover() {
+  discovering.value = true
+  localError.value = ''
+  const n = ticket
+  try {
+    const r = await Http.post<DNSProfile['zones']>('api/node-dns-zones', {
+      data: JSON.stringify({
+        id: form.value.id,
+        auth_type: form.value.auth_type,
+        email: form.value.email ?? '',
+        token: form.value.auth_type === 'token' ? secret.value : '',
+        api_key: form.value.auth_type === 'global_key' ? secret.value : '',
+      }),
+    })
+    if (n !== ticket) return
+    if (r.success) available.value = r.obj
+    else localError.value = t('nodeUI.zoneLookupFailed')
+  } catch {
+    if (n === ticket) localError.value = t('nodes.loadFailed')
+  } finally {
+    if (n === ticket) discovering.value = false
+  }
+}
+function syncZones() {
+  form.value.zones = available.value.filter((z) => selected.value.includes(z.id))
+}
+function save() {
+  emit('save', {
+    ...form.value,
+    expected_version: form.value.version,
+    version: undefined,
+    secret_configured: undefined,
+    provider: undefined,
+    ...(form.value.auth_type === 'token' ? { token: secret.value } : { api_key: secret.value }),
+  })
+}
 </script>

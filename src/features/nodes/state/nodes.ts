@@ -1,11 +1,23 @@
 import { defineStore } from 'pinia'
 import HttpUtils from '@/plugins/httputil'
-import type { NodesBundle, NodeRecord, NodeTemplate, NodeInbound, NodeInstallation, NodeJob, ResourceBundle, NodeProvisionRequest, NodeTLSProfile } from '@/features/nodes/types/nodes'
+import type {
+  NodesBundle,
+  NodeRecord,
+  NodeTemplate,
+  NodeInbound,
+  NodeInstallation,
+  NodeJob,
+  ResourceBundle,
+  NodeProvisionRequest,
+  NodeTLSProfile,
+} from '@/features/nodes/types/nodes'
 import { push } from 'notivue'
 import { i18n } from '@/locales'
 
 let requestSession = 0
-export function invalidateNodesRequests() { requestSession++ }
+export function invalidateNodesRequests() {
+  requestSession++
+}
 
 // Remote objects have their own store and API. They never enter Data.inbounds.
 export default defineStore('Nodes', {
@@ -23,7 +35,7 @@ export default defineStore('Nodes', {
     writeEpoch: 0,
     writes: 0,
     nodeaccess: [] as NonNullable<NodesBundle['nodeaccess']>,
-    resources: {dnsprofiles:[],domains:[],certificates:[],dnsrecords:[]} as ResourceBundle,
+    resources: { dnsprofiles: [], domains: [], certificates: [], dnsrecords: [] } as ResourceBundle,
     resourcesLoading: false,
     resourcesFailed: false,
   }),
@@ -90,30 +102,74 @@ export default defineStore('Nodes', {
     },
     async save(object: 'nodes' | 'nodeinbounds' | 'nodetemplates', action: string, data: unknown) {
       this.lastSaveError = ''
-      this.writeEpoch++; this.writes++
+      this.writeEpoch++
+      this.writes++
       const session = requestSession
       try {
-        const msg = await HttpUtils.post<NodesBundle>('api/save', { object, action, data: JSON.stringify(data) })
+        const msg = await HttpUtils.post<NodesBundle>('api/save', {
+          object,
+          action,
+          data: JSON.stringify(data),
+        })
         if (session !== requestSession) return false
-        if (msg.success) { this.setBundle(msg.obj); push.success({ message: i18n.global.t('nodes.saved') }) }
-        else this.lastSaveError = msg.msg
+        if (msg.success) {
+          this.setBundle(msg.obj)
+          push.success({ message: i18n.global.t('nodes.saved') })
+        } else this.lastSaveError = msg.msg
         return msg.success
-      } catch {if(session===requestSession)this.lastSaveError=i18n.global.t('nodes.saveFailed');return false}
-      finally { if (session === requestSession) this.writes = Math.max(0, this.writes - 1) }
+      } catch {
+        if (session === requestSession) this.lastSaveError = i18n.global.t('nodes.saveFailed')
+        return false
+      } finally {
+        if (session === requestSession) this.writes = Math.max(0, this.writes - 1)
+      }
     },
-    async loadResources(){
-      if(this.resourcesLoading||this.writes)return
-      const session=requestSession,epoch=this.writeEpoch;this.resourcesLoading=true
-      try{const r=await HttpUtils.get<ResourceBundle>('api/node-resources');if(session===requestSession&&epoch===this.writeEpoch){if(r.success){this.resources=r.obj;this.resourcesFailed=false}else this.resourcesFailed=true}}
-      catch{if(session===requestSession)this.resourcesFailed=true}
-      finally{if(session===requestSession)this.resourcesLoading=false}
+    async loadResources() {
+      if (this.resourcesLoading || this.writes) return
+      const session = requestSession,
+        epoch = this.writeEpoch
+      this.resourcesLoading = true
+      try {
+        const r = await HttpUtils.get<ResourceBundle>('api/node-resources')
+        if (session === requestSession && epoch === this.writeEpoch) {
+          if (r.success) {
+            this.resources = r.obj
+            this.resourcesFailed = false
+          } else this.resourcesFailed = true
+        }
+      } catch {
+        if (session === requestSession) this.resourcesFailed = true
+      } finally {
+        if (session === requestSession) this.resourcesLoading = false
+      }
     },
-    async resource(resource:string,action:string,data:unknown){
-      this.writes++;this.writeEpoch++;const session=requestSession;this.lastSaveError='';let success=false
-      try{const r=await HttpUtils.post<ResourceBundle>('api/node-resource',{resource,action,data:JSON.stringify(data)});if(session===requestSession){success=r.success;if(!success)this.lastSaveError=r.msg;else if(r.obj?.dnsprofiles){this.resources=r.obj;this.resourcesFailed=false}}}
-      catch{if(session===requestSession)this.lastSaveError=i18n.global.t('nodes.saveFailed')}
-      finally{if(session===requestSession)this.writes=Math.max(0,this.writes-1)}
-      if(success&&session===requestSession)await this.loadResources();return success
+    async resource(resource: string, action: string, data: unknown) {
+      this.writes++
+      this.writeEpoch++
+      const session = requestSession
+      this.lastSaveError = ''
+      let success = false
+      try {
+        const r = await HttpUtils.post<ResourceBundle>('api/node-resource', {
+          resource,
+          action,
+          data: JSON.stringify(data),
+        })
+        if (session === requestSession) {
+          success = r.success
+          if (!success) this.lastSaveError = r.msg
+          else if (r.obj?.dnsprofiles) {
+            this.resources = r.obj
+            this.resourcesFailed = false
+          }
+        }
+      } catch {
+        if (session === requestSession) this.lastSaveError = i18n.global.t('nodes.saveFailed')
+      } finally {
+        if (session === requestSession) this.writes = Math.max(0, this.writes - 1)
+      }
+      if (success && session === requestSession) await this.loadResources()
+      return success
     },
   },
 })
