@@ -53,7 +53,7 @@ it('shows no single TLS mode toggle when REALITY is unavailable', async () => {
   wrapper.unmount()
 })
 
-it('allows a panel TLS template instead of completing the custom REALITY draft', async () => {
+it('allows a panel TLS template or disabled TLS without completing the REALITY draft', async () => {
   const entry = newEntry('vless')
   entry.options.tls = { enabled: true, reality: { enabled: true, handshake: { server: '', server_port: 443 } } }
   const wrapper = mount(NodeSpecEntry, {
@@ -68,5 +68,12 @@ it('allows a panel TLS template instead of completing the custom REALITY draft',
   expect(save().props('disabled')).toBe(false)
   await save().trigger('click')
   expect(wrapper.emitted('save')?.[0]?.[0]).toEqual(expect.objectContaining({ tls_profile_id: 7 }))
+  profile.vm.$emit('update:modelValue', 0)
+  await wrapper.vm.$nextTick()
+  expect(save().props('disabled')).toBe(true)
+  const enabled = wrapper.findAllComponents({ name: 'VSwitch' }).find(toggle => toggle.attributes('label') === i18n.global.t('enable') + ' REALITY')!
+  enabled.vm.$emit('update:modelValue', false)
+  await wrapper.vm.$nextTick()
+  expect(save().props('disabled')).toBe(false)
   wrapper.unmount()
 })

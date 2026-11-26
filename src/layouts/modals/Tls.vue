@@ -29,7 +29,10 @@
                 hide-details
               />
             </v-col>
-            <v-col v-if="allowReality" align="end">
+            <v-col
+              v-if="allowReality"
+              align="end"
+            >
               <v-btn-toggle
                 v-model="tlsType"
                 class="rounded-xl"
