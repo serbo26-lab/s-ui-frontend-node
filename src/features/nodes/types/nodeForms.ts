@@ -74,6 +74,6 @@ export function serializeNodeInbound(form: Inbound, tlsConfig: tls): Omit<NodeBl
     type: form.type as NodeBlueprint['type'],
     enable: form.enable !== false,
     options,
-    client_tls: clone(tlsConfig.client),
+    client_tls: { ...clone(tlsConfig.client) },
   }
 }
