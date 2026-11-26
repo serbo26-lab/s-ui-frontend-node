@@ -667,9 +667,9 @@
             <v-row>
               <v-col>{{ $t('type') }}</v-col>
               <v-col
-                :title="p.auth_type==='token'?'API Token':'Global API Key'"
+                :title="$t(p.auth_type==='token'?'nodeUI.apiToken':'nodeUI.globalAPIKey')"
               >
-                {{ p.auth_type==='token'?'API Token':'Global API Key' }}
+                {{ $t(p.auth_type==='token'?'nodeUI.apiToken':'nodeUI.globalAPIKey') }}
               </v-col>
             </v-row>
             <v-row>

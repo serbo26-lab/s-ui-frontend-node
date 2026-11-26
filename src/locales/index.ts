@@ -13,10 +13,10 @@ export const i18n = createI18n({
   fallbackLocale: 'en',
   messages: {
     en: { ...en, ...nodeMessages.en },
-    fa: fa,
-    vi: vi,
-    zhHans: zhcn,
-    zhHant: zhtw,
+    fa: { ...fa, ...nodeMessages.fa },
+    vi: { ...vi, ...nodeMessages.vi },
+    zhHans: { ...zhcn, ...nodeMessages.zhHans },
+    zhHant: { ...zhtw, ...nodeMessages.zhHant },
     ru: { ...ru, ...nodeMessages.ru },
   },
 })

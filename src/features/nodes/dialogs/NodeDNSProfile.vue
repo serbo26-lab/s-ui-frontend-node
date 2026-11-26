@@ -33,7 +33,7 @@
                 v-model="form.auth_type"
                 :disabled="discovering||busy"
                 :label="$t('nodeUI.authentication')"
-                :items="[{title:'API Token',value:'token'},{title:'Global API Key',value:'global_key'}]"
+                :items="[{title:$t('nodeUI.apiToken'),value:'token'},{title:$t('nodeUI.globalAPIKey'),value:'global_key'}]"
               />
             </v-col>
           </v-row>
@@ -41,14 +41,14 @@
             v-if="form.auth_type==='global_key'"
             v-model="form.email"
             :disabled="discovering||busy"
-            label="Cloudflare email"
+            :label="$t('nodeUI.cloudflareEmail')"
           />
           <v-text-field
             v-model="secret"
             :disabled="discovering||busy"
             type="password"
             autocomplete="new-password"
-            :label="form.auth_type==='token'?'API Token':'Global API Key'"
+            :label="$t(form.auth_type==='token'?'nodeUI.apiToken':'nodeUI.globalAPIKey')"
             :placeholder="value?.secret_configured ? $t('nodeUI.secretConfigured') : undefined"
           />
           <v-btn
@@ -82,7 +82,7 @@
                     :label="$t('nodeUI.zone')"
                   /><v-text-field
                     v-model="zone.id"
-                    label="Zone ID"
+                    :label="$t('nodeUI.zoneID')"
                   /><v-btn
                     icon="mdi-close"
                     :aria-label="$t('actions.del')"
