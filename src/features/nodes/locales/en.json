@@ -179,6 +179,7 @@
     "task": "Operation",
     "dnsIP": "Public IP for DNS",
     "dnsAlreadyRemoved": "DNS records already removed",
+    "serverAlreadyStopped": "The server was reinstalled or the agent was stopped manually",
     "sniRequired": "Enter a manual SNI or select the node domain.",
     "copyClash": "Copy Clash URL",
     "openClash": "Open Clash subscription",

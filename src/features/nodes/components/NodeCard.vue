@@ -48,6 +48,14 @@
         <v-card-text class="node-delete-body overflow-y-auto">
           {{ $t('confirm') }}
           <v-checkbox
+            v-if="requireStoppedConfirmation"
+            v-model="serverStoppedConfirmed"
+            :label="$t('nodeUI.serverAlreadyStopped')"
+            :disabled="busy"
+            density="compact"
+            hide-details
+          />
+          <v-checkbox
             v-if="allowDnsConfirmation"
             v-model="dnsConfirmed"
             :label="$t('nodeUI.dnsAlreadyRemoved')"
@@ -69,6 +77,7 @@
             color="error"
             variant="outlined"
             :loading="busy"
+            :disabled="busy || requireStoppedConfirmation && !serverStoppedConfirmed"
             @click="emit('confirm')"
           >
             {{ $t('yes') }}
@@ -97,8 +106,10 @@ defineProps<{
   busy?: boolean
   error?: string
   allowDnsConfirmation?: boolean
+  requireStoppedConfirmation?: boolean
 }>()
 const dnsConfirmed = defineModel<boolean>('dnsConfirmed', { default: false })
+const serverStoppedConfirmed = defineModel<boolean>('serverStoppedConfirmed', { default: false })
 const emit = defineEmits<{confirm: []; cancel: []}>()
 </script>
 

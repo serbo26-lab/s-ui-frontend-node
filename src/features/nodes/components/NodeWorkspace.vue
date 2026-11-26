@@ -159,9 +159,11 @@
         >
           <NodeCard
             v-model:dns-confirmed="dnsAlreadyRemoved"
+            v-model:server-stopped-confirmed="serverAlreadyStopped"
             :title="node.name"
             :confirming="deleteTarget === 'node-'+node.id"
             :allow-dns-confirmation="allowDnsConfirmation"
+            :require-stopped-confirmation="!node.disable_confirmed"
             :busy="busy"
             :error="error"
             :subtitle="store.resources.domains.find(d=>d.node_id===node.id)?.fqdn || node.linkaddress || '—'"
@@ -802,6 +804,7 @@ async function saveHost(request:NodeProvisionRequest){busy.value=true;hostError.
 const templateOpen=ref(false),editingTemplate=ref<NodeTemplate>(),profileOpen=ref(false),editingProfile=ref<DNSProfile>(),resourceOpen=ref(false),overrideOpen=ref(false),editingEntry=ref<SpecEntry>(),overrideVersion=ref(0)
 const deleteTarget=ref('');let confirmAction:()=>Promise<void>=async()=>{},workspaceTicket=0,alive=true
 const dnsAlreadyRemoved = ref(false)
+const serverAlreadyStopped = ref(false)
 const allowDnsConfirmation = ref(false)
 const dnsCleanupErrors = new Set([
   'dns_api_rejected', 'dns_api_unreachable', 'dns_state_key_unavailable',
@@ -862,6 +865,7 @@ function confirm(target: string, action: () => Promise<void>) {
 function closeDelete() {
   deleteTarget.value = ''
   dnsAlreadyRemoved.value = false
+  serverAlreadyStopped.value = false
   allowDnsConfirmation.value = false
   error.value = ''
 }
@@ -881,13 +885,17 @@ function removeProfile(value: DNSProfile) {
 }
 
 function canRemoveNode(node: NodeRecord) {
-  return node.disable_confirmed && !activeNodeJob(node.id)
+  return !node.enable && !activeNodeJob(node.id)
 }
 
 function removeNode(node: NodeRecord) {
   if (!canRemoveNode(node)) return
   confirm('node-' + node.id, async () => {
-    const request = dnsAlreadyRemoved.value ? { id: node.id, dns_already_removed: true } : node.id
+    const request = {
+      id: node.id,
+      dns_already_removed: dnsAlreadyRemoved.value,
+      server_already_stopped: serverAlreadyStopped.value,
+    }
     const removed = await perform(() => store.save('nodes', 'del', request))
     if (removed) {
       if (selectedId.value === node.id) detailOpen.value = false

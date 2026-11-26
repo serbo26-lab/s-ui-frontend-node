@@ -173,6 +173,7 @@
   },
   "nodeUI": {
     "dnsAlreadyRemoved": "DNS-записи уже удалены",
+    "serverAlreadyStopped": "ОС переустановлена или агент остановлен вручную",
     "inboundTemplates": "Шаблоны входящих",
     "addInboundTemplate": "Добавить шаблон входящего",
     "editInboundTemplate": "Редактировать шаблон входящего",
