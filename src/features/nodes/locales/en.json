@@ -310,6 +310,7 @@
       "dns_address_not_resolved": "The domain does not resolve yet. The panel will check DNS again automatically.",
       "dns_lookup_failed": "The panel could not check DNS. It will retry automatically.",
       "access_delivery_failed": "The panel could not sync client access. It will retry automatically.",
+      "traffic_accounting_failed": "The agent could not save traffic counters. Check free disk space and state directory access.",
       "http01_port_occupied": "TCP 80 is occupied. Use DNS-01 or a provided certificate.",
       "agent_http01_port_occupied": "TCP 80 is occupied on the node. Use DNS-01 or a provided certificate.",
       "certificate_pending": "The certificate is being prepared.",
