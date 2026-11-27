@@ -26,6 +26,7 @@
       "checking": "Checking transition",
       "applied": "Applied",
       "pending": "Applying"
-    }
+    },
+    "trustedProxies": "Trusted HTTP proxies (CIDR)"
   }
 }

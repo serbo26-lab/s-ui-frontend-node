@@ -26,6 +26,7 @@
       "checking": "بررسی انتقال",
       "applied": "اعمال شد",
       "pending": "در حال اعمال"
-    }
+    },
+    "trustedProxies": "پراکسی‌های HTTP مورد اعتماد (CIDR)"
   }
 }

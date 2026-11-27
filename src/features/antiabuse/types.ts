@@ -5,6 +5,7 @@ export interface IPConfiguration {
   enabled: boolean
   activity_seconds: number
   transition_seconds: number
+  trusted_proxies: string[]
   groups: GroupIPRule[]
 }
 export interface ClientIPStatus {

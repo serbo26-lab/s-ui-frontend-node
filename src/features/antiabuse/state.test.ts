@@ -8,7 +8,7 @@ import type { IPConfiguration } from './types'
 
 vi.mock('@/plugins/httputil', () => ({ default: { get: vi.fn(), post: vi.fn() }, registerHttpHooks: vi.fn() }))
 beforeEach(() => { setActivePinia(createPinia()); vi.clearAllMocks() })
-const config: IPConfiguration = { revision: 1, enabled: true, activity_seconds: 60, transition_seconds: 120, groups: [] }
+const config: IPConfiguration = { revision: 1, enabled: true, activity_seconds: 60, transition_seconds: 120, trusted_proxies: [], groups: [] }
 
 it('does not let a pre-save response overwrite saved group limits', async () => {
   let finish: (value: { success: boolean; msg: string; obj: IPConfiguration }) => void = () => {}

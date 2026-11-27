@@ -16,7 +16,7 @@ beforeEach(() => setActivePinia(createPinia()))
 it('loads group inheritance for a new visible client without a traffic counter', async () => {
   const store = useIPControl()
   const load = vi.spyOn(store, 'loadSettings').mockImplementation(async () => {
-    store.config = { revision: 1, enabled: true, activity_seconds: 60, transition_seconds: 120,
+    store.config = { revision: 1, enabled: true, activity_seconds: 60, transition_seconds: 120, trusted_proxies: [],
       groups: [{ group: 'group', limit: 4 }] }
     return true
   })

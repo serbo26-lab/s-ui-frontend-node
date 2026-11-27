@@ -26,6 +26,7 @@
       "checking": "Проверка перехода",
       "applied": "Применено",
       "pending": "Применение"
-    }
+    },
+    "trustedProxies": "Доверенные HTTP-прокси (CIDR)"
   }
 }

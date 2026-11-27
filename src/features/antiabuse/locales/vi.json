@@ -26,6 +26,7 @@
       "checking": "Đang kiểm tra chuyển tiếp",
       "applied": "Đã áp dụng",
       "pending": "Đang áp dụng"
-    }
+    },
+    "trustedProxies": "Proxy HTTP đáng tin cậy (CIDR)"
   }
 }

@@ -26,6 +26,7 @@
       "checking": "正在檢查切換",
       "applied": "已套用",
       "pending": "正在套用"
-    }
+    },
+    "trustedProxies": "受信任的 HTTP 代理 (CIDR)"
   }
 }

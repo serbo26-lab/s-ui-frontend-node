@@ -3,7 +3,7 @@ import { effectiveLimit, validLimit } from './types'
 import type { IPConfiguration } from './types'
 
 const config: IPConfiguration = { revision: 1, enabled: true, activity_seconds: 60,
-  transition_seconds: 120, groups: [{ group: 'group', limit: 4 }] }
+  transition_seconds: 120, trusted_proxies: [], groups: [{ group: 'group', limit: 4 }] }
 
 it('preserves inheritance, explicit unlimited and both override directions', () => {
   expect(effectiveLimit(undefined, 'group', config)).toBe(4)

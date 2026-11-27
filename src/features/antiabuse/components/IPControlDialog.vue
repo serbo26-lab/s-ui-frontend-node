@@ -76,6 +76,19 @@
             </v-row>
             <v-row>
               <v-col cols="12">
+                <v-combobox
+                  v-model="form.trusted_proxies"
+                  multiple
+                  chips
+                  closable-chips
+                  :label="$t('ipControl.trustedProxies')"
+                  :rules="[proxiesRule]"
+                  hide-details="auto"
+                />
+              </v-col>
+            </v-row>
+            <v-row>
+              <v-col cols="12">
                 <div class="text-center text-medium-emphasis">
                   {{ $t('ipControl.groups') }}
                 </div>
@@ -225,6 +238,8 @@ const activityRule = (value: unknown) => validLimit(value) && Number(value) > 15
 const transitionRule = (value: unknown) => validLimit(value) && Number(value) >= Math.max(30, form.value?.activity_seconds ?? 60) || invalid()
 const limitRule = (value: unknown) => validLimit(value) || invalid()
 const requiredGroup = (value: unknown) => typeof value === 'string' && value.length > 0 || invalid()
+const proxiesRule = (value: unknown) => Array.isArray(value) && value.length <= 128 &&
+  value.every(item => typeof item === 'string' && /^[0-9a-fA-F.:]+\/\d{1,3}$/.test(item)) || invalid()
 const eventHeaders = computed(() => [
   { title: i18n.global.t('ipControl.time'), key: 'at' },
   { title: i18n.global.t('objects.client'), key: 'client_id' },
@@ -242,7 +257,8 @@ async function load() {
   const success = await store.loadSettings()
   if (current !== generation) return
   const config = store.config
-  form.value = success && config ? { ...config, groups: config.groups.map(rule => ({ ...rule })) } : null
+  form.value = success && config ? { ...config, groups: config.groups.map(rule => ({ ...rule })),
+    trusted_proxies: [...config.trusted_proxies] } : null
   failed.value = !success
   loading.value = false
 }
