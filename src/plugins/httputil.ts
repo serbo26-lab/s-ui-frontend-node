@@ -12,10 +12,10 @@ interface HttpHooks {
   errorMessage?: (message: string) => string | undefined
 }
 
-let httpHooks: HttpHooks = {}
+const httpHooks: HttpHooks[] = []
 
 export function registerHttpHooks(hooks: HttpHooks): void {
-  httpHooks = hooks
+  httpHooks.push(hooks)
 }
 
 // The envelope every endpoint answers with. What rides in `obj` depends on the
@@ -68,7 +68,7 @@ function _handleMsg(msg: unknown): void {
     } else {
       push.error({
         title: i18n.global.t('failed'),
-        message: httpHooks.errorMessage?.(msg.msg) ?? msg.msg
+        message: httpHooks.map(hooks => hooks.errorMessage?.(msg.msg)).find(message => message !== undefined) ?? msg.msg
       })
     }
   }
@@ -86,7 +86,7 @@ export const logout = async () => {
     // for a moment.
     clearAuthenticated()
     Data().$reset()
-    httpHooks.onLogout?.()
+    httpHooks.forEach(hooks => hooks.onLogout?.())
     router.push('/login')
   }
 }

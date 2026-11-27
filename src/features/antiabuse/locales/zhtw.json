@@ -1,0 +1,24 @@
+{
+  "ipControl": {
+    "title": "IP 控制",
+    "limit": "IP 限制",
+    "inherit": "群組：{limit}",
+    "active": "活躍 IP",
+    "activityWindow": "活動視窗（秒）",
+    "transitionWindow": "切換視窗（秒）",
+    "groups": "群組限制",
+    "journal": "日誌",
+    "time": "時間",
+    "event": "事件",
+    "denied": "被拒絕的 IP",
+    "errors": {
+      "conflict": "設定已變更，請重新整理後再試。",
+      "invalid": "@:error.invalidData",
+      "unavailable": "IP 控制無法使用。"
+    },
+    "events": {
+      "configuration_changed": "設定已更新",
+      "admission_changed": "IP 連線規則已變更"
+    }
+  }
+}

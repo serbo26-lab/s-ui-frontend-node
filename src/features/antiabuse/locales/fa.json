@@ -1,0 +1,24 @@
+{
+  "ipControl": {
+    "title": "کنترل IP",
+    "limit": "محدودیت IP",
+    "inherit": "گروه: {limit}",
+    "active": "IPهای فعال",
+    "activityWindow": "بازه فعالیت (ثانیه)",
+    "transitionWindow": "بازه انتقال (ثانیه)",
+    "groups": "محدودیت گروه‌ها",
+    "journal": "گزارش",
+    "time": "زمان",
+    "event": "رویداد",
+    "denied": "IPهای ردشده",
+    "errors": {
+      "conflict": "تنظیمات تغییر کرده است. بازخوانی و دوباره تلاش کنید.",
+      "invalid": "@:error.invalidData",
+      "unavailable": "کنترل IP در دسترس نیست."
+    },
+    "events": {
+      "configuration_changed": "تنظیمات به‌روز شد",
+      "admission_changed": "پذیرش IP تغییر کرد"
+    }
+  }
+}
