@@ -20,6 +20,11 @@ export interface ClientIPStatus {
   updated_at: number
   denied: number
 }
+export interface ClientIPStatuses {
+  scope: string
+  enabled: boolean
+  clients: ClientIPStatus[]
+}
 export interface IPEvent {
   id: number
   at: number

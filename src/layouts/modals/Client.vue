@@ -71,6 +71,7 @@
                   <ClientIPLimit
                     v-model="client.ip_control"
                     :group="client.group"
+                    :visible="visible"
                     @update:valid="ipLimitValid = $event"
                   />
                 </v-col>

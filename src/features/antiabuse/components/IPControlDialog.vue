@@ -13,6 +13,12 @@
     >
       <v-card-title>{{ $t('ipControl.title') }}</v-card-title>
       <v-divider />
+      <v-skeleton-loader
+        v-if="loading && !form"
+        class="mx-auto border"
+        width="95%"
+        type="card, text, divider, list-item-two-line"
+      />
       <v-card-text class="py-0 px-4">
         <v-alert
           v-if="failed"

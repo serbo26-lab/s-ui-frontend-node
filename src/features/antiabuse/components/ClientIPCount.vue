@@ -17,8 +17,7 @@
 import { computed, ref, watch } from 'vue'
 import { locale } from '@/locales'
 import HttpUtils from '@/plugins/httputil'
-import type { ClientIPStatus } from '../types'
-import { useIPControl } from '../state'
+import type { ClientIPStatus, ClientIPStatuses } from '../types'
 
 const props = defineProps<{ clientId: number; visible: boolean }>()
 const status = ref<ClientIPStatus | null>(null)
@@ -39,7 +38,6 @@ watch(() => [props.visible, props.clientId] as const, ([visible, id], _old, clea
   status.value = null
   enabled.value = null
   if (!visible) return
-  void useIPControl().loadSettings()
   if (!id) return
   const abort = new AbortController()
   let busy = false
@@ -49,11 +47,11 @@ watch(() => [props.visible, props.clientId] as const, ([visible, id], _old, clea
     busy = true
     const requested = Date.now()
     try {
-      const result = await HttpUtils.get<{ enabled: boolean; clients: ClientIPStatus[] }>(
+      const result = await HttpUtils.get<ClientIPStatuses>(
         'api/antiabuse/clients', { ids: id }, { signal: abort.signal })
       if (abort.signal.aborted) return
-      enabled.value = result.success ? result.obj.enabled : null
-      status.value = result.success && result.obj.enabled ? result.obj.clients[0] ?? null : null
+      enabled.value = result.success && result.obj.scope ? result.obj.enabled : null
+      status.value = result.success && result.obj.scope && result.obj.enabled ? result.obj.clients[0] ?? null : null
       received.value = requested
       clock.value = Date.now()
     } finally { busy = false }

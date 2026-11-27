@@ -23,7 +23,7 @@ import { useIPControl } from '../state'
 import { effectiveLimit, validLimit } from '../types'
 import type { ClientIPPolicy } from '../types'
 
-const props = defineProps<{ modelValue?: ClientIPPolicy; group: string }>()
+const props = defineProps<{ modelValue?: ClientIPPolicy; group: string; visible: boolean }>()
 const emit = defineEmits<{
   'update:modelValue': [value: ClientIPPolicy]
   'update:valid': [value: boolean]
@@ -39,4 +39,5 @@ function update(value: string | number | null) {
   if (valid) emit('update:modelValue', { limit: value == null || value === '' ? null : Number(value) })
 }
 watch(() => props.modelValue, () => emit('update:valid', true))
+watch(() => props.visible, visible => { if (visible) void store.loadSettings() }, { immediate: true })
 </script>
