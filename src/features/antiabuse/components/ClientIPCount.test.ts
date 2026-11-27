@@ -13,7 +13,7 @@ beforeEach(() => {
   vi.spyOn(useIPControl(), 'loadSettings').mockResolvedValue(true)
 })
 afterEach(() => vi.useRealTimers())
-const global = { plugins: [i18n] }
+const global = { plugins: [i18n], stubs: { VTooltip: true } }
 
 it('shows a complete zero but does not turn missing data into zero', async () => {
   vi.mocked(HttpUtils.get).mockResolvedValue({ success: true, msg: '', obj: {

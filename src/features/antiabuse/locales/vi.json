@@ -19,6 +19,13 @@
     "events": {
       "configuration_changed": "Đã cập nhật cài đặt",
       "admission_changed": "Đã thay đổi quyền kết nối IP"
+    },
+    "states": {
+      "disabled": "Đã tắt",
+      "unavailable": "Không khả dụng",
+      "checking": "Đang kiểm tra chuyển tiếp",
+      "applied": "Đã áp dụng",
+      "pending": "Đang áp dụng"
     }
   }
 }

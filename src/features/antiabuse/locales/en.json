@@ -19,6 +19,13 @@
     "events": {
       "configuration_changed": "Settings updated",
       "admission_changed": "IP admission changed"
+    },
+    "states": {
+      "disabled": "Disabled",
+      "unavailable": "Unavailable",
+      "checking": "Checking transition",
+      "applied": "Applied",
+      "pending": "Applying"
     }
   }
 }

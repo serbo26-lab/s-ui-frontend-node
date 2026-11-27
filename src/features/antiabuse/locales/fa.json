@@ -19,6 +19,13 @@
     "events": {
       "configuration_changed": "تنظیمات به‌روز شد",
       "admission_changed": "پذیرش IP تغییر کرد"
+    },
+    "states": {
+      "disabled": "غیرفعال",
+      "unavailable": "در دسترس نیست",
+      "checking": "بررسی انتقال",
+      "applied": "اعمال شد",
+      "pending": "در حال اعمال"
     }
   }
 }

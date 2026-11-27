@@ -116,6 +116,7 @@
                 <v-btn
                   variant="text"
                   icon="mdi-delete"
+                  size="small"
                   :aria-label="$t('actions.del')"
                   @click="form.groups.splice(index, 1)"
                 />

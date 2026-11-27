@@ -19,6 +19,13 @@
     "events": {
       "configuration_changed": "Настройки обновлены",
       "admission_changed": "Допуск IP изменён"
+    },
+    "states": {
+      "disabled": "Выключен",
+      "unavailable": "Недоступно",
+      "checking": "Проверка перехода",
+      "applied": "Применено",
+      "pending": "Применение"
     }
   }
 }

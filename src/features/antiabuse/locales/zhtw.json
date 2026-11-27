@@ -19,6 +19,13 @@
     "events": {
       "configuration_changed": "設定已更新",
       "admission_changed": "IP 連線規則已變更"
+    },
+    "states": {
+      "disabled": "已停用",
+      "unavailable": "無法使用",
+      "checking": "正在檢查切換",
+      "applied": "已套用",
+      "pending": "正在套用"
     }
   }
 }

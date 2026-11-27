@@ -9,6 +9,9 @@ export interface IPConfiguration {
 }
 export interface ClientIPStatus {
   client_id: number
+  limit_source: "client" | "group" | "default"
+  requested_revision: number
+  applied_revision: number
   limit: number
   available: boolean
   active_count: number | null
