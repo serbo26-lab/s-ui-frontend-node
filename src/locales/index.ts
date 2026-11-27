@@ -5,6 +5,7 @@ import vi from './vi'
 import zhcn from './zhcn'
 import zhtw from './zhtw'
 import ru from './ru'
+import { ipMessages } from '@/features/antiabuse/locales'
 import { nodeMessages } from '@/features/nodes/locales'
 
 export const i18n = createI18n({
@@ -12,12 +13,12 @@ export const i18n = createI18n({
   locale: localStorage.getItem("locale") ?? 'en',
   fallbackLocale: 'en',
   messages: {
-    en: { ...en, ...nodeMessages.en },
-    fa: { ...fa, ...nodeMessages.fa },
-    vi: { ...vi, ...nodeMessages.vi },
-    zhHans: { ...zhcn, ...nodeMessages.zhHans },
-    zhHant: { ...zhtw, ...nodeMessages.zhHant },
-    ru: { ...ru, ...nodeMessages.ru },
+    en: { ...en, ...nodeMessages.en, ...ipMessages.en },
+    fa: { ...fa, ...nodeMessages.fa, ...ipMessages.fa },
+    vi: { ...vi, ...nodeMessages.vi, ...ipMessages.vi },
+    zhHans: { ...zhcn, ...nodeMessages.zhHans, ...ipMessages.zhHans },
+    zhHant: { ...zhtw, ...nodeMessages.zhHant, ...ipMessages.zhHant },
+    ru: { ...ru, ...nodeMessages.ru, ...ipMessages.ru },
   },
 })
 

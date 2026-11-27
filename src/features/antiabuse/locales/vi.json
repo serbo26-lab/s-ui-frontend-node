@@ -1,0 +1,32 @@
+{
+  "ipControl": {
+    "title": "Kiểm soát IP",
+    "limit": "Giới hạn IP",
+    "inherit": "Nhóm: {limit}",
+    "active": "IP đang hoạt động",
+    "activityWindow": "Khoảng hoạt động (giây)",
+    "transitionWindow": "Khoảng chuyển tiếp (giây)",
+    "groups": "Giới hạn nhóm",
+    "journal": "Nhật ký",
+    "time": "Thời gian",
+    "event": "Sự kiện",
+    "denied": "IP bị từ chối",
+    "errors": {
+      "conflict": "Cài đặt đã thay đổi. Tải lại và thử lại.",
+      "invalid": "@:error.invalidData",
+      "unavailable": "Kiểm soát IP không khả dụng."
+    },
+    "events": {
+      "configuration_changed": "Đã cập nhật cài đặt",
+      "admission_changed": "Đã thay đổi quyền kết nối IP"
+    },
+    "states": {
+      "disabled": "Đã tắt",
+      "unavailable": "Không khả dụng",
+      "checking": "Đang kiểm tra chuyển tiếp",
+      "applied": "Đã áp dụng",
+      "pending": "Đang áp dụng"
+    },
+    "trustedProxies": "Proxy HTTP đáng tin cậy (CIDR)"
+  }
+}

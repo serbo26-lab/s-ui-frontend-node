@@ -1,4 +1,5 @@
 import RandomUtil from "@/plugins/randomUtil"
+import type { ClientIPPolicy } from "@/features/antiabuse/types"
 
 export interface Link {
   type: "local" | "external" | "sub"
@@ -7,6 +8,7 @@ export interface Link {
 }
 
 export interface Client {
+  ip_control?: ClientIPPolicy
   id?: number
 	enable: boolean
 	name: string

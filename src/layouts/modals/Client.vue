@@ -63,6 +63,18 @@
                     hide-details
                   />
                 </v-col>
+                <v-col
+                  cols="12"
+                  sm="6"
+                  md="4"
+                >
+                  <ClientIPLimit
+                    v-model="client.ip_control"
+                    :group="client.group"
+                    :visible="visible"
+                    @update:valid="ipLimitValid = $event"
+                  />
+                </v-col>
               </v-row>
               <v-row>
                 <v-col
@@ -218,6 +230,16 @@
                     icon="mdi-download"
                     color="success"
                   /><span class="text-success">{{ down }}</span>
+                </v-col>
+                <v-col
+                  cols="12"
+                  sm="6"
+                  md="4"
+                >
+                  <ClientIPCount
+                    :client-id="id"
+                    :visible="visible"
+                  />
                 </v-col>
               </v-row>
               <v-row v-if="id >0 && client.autoReset">
@@ -438,6 +460,7 @@
           color="primary"
           variant="tonal"
           :loading="loading"
+          :disabled="!ipLimitValid"
           @click="saveChanges"
         >
           {{ $t('actions.save') }}
@@ -454,6 +477,8 @@ import { HumanReadable } from '@/plugins/utils'
 import Data from '@/store/modules/data'
 import { locale } from '@/locales'
 import type { PropType } from 'vue'
+import ClientIPLimit from '@/features/antiabuse/components/ClientIPLimit.vue'
+import ClientIPCount from '@/features/antiabuse/components/ClientIPCount.vue'
 import NodeSelect from '@/features/nodes/components/NodeSelect.vue'
 import NodeClientLinks from '@/features/nodes/components/NodeClientLinks.vue'
 
@@ -468,7 +493,7 @@ interface InboundTag {
 }
 
 export default {
-  components: { DatePick, NodeSelect, NodeClientLinks },
+  components: { DatePick, NodeSelect, NodeClientLinks, ClientIPLimit, ClientIPCount },
   props: {
     visible: { type: Boolean, required: true },
     id: { type: Number, required: true },
@@ -479,6 +504,7 @@ export default {
   data() {
     return {
       client: createClient(),
+      ipLimitValid: true,
       title: "add",
       loading: false,
       tab: "t1",
@@ -578,7 +604,7 @@ export default {
       this.$emit('close')
     },
     async saveChanges() {
-      if (!this.$props.visible) return
+      if (!this.$props.visible || !this.ipLimitValid) return
       // check duplicate name
       const isDuplicateName = Data().checkClientName(this.$props.id, this.client.name)
       if (isDuplicateName) return

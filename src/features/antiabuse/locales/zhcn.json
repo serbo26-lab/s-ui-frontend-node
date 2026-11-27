@@ -1,0 +1,32 @@
+{
+  "ipControl": {
+    "title": "IP 控制",
+    "limit": "IP 限制",
+    "inherit": "分组：{limit}",
+    "active": "活跃 IP",
+    "activityWindow": "活动窗口（秒）",
+    "transitionWindow": "切换窗口（秒）",
+    "groups": "分组限制",
+    "journal": "日志",
+    "time": "时间",
+    "event": "事件",
+    "denied": "被拒绝的 IP",
+    "errors": {
+      "conflict": "设置已更改，请刷新后重试。",
+      "invalid": "@:error.invalidData",
+      "unavailable": "IP 控制不可用。"
+    },
+    "events": {
+      "configuration_changed": "设置已更新",
+      "admission_changed": "IP 接入规则已更改"
+    },
+    "states": {
+      "disabled": "已禁用",
+      "unavailable": "不可用",
+      "checking": "正在检查切换",
+      "applied": "已应用",
+      "pending": "正在应用"
+    },
+    "trustedProxies": "受信任的 HTTP 代理 (CIDR)"
+  }
+}

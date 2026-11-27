@@ -1,0 +1,32 @@
+{
+  "ipControl": {
+    "title": "IP control",
+    "limit": "IP limit",
+    "inherit": "Group: {limit}",
+    "active": "Active IPs",
+    "activityWindow": "Activity window (s)",
+    "transitionWindow": "Transition window (s)",
+    "groups": "Group limits",
+    "journal": "Journal",
+    "time": "Time",
+    "event": "Event",
+    "denied": "Denied IPs",
+    "errors": {
+      "conflict": "Settings changed. Reload and retry.",
+      "invalid": "@:error.invalidData",
+      "unavailable": "IP control is unavailable."
+    },
+    "events": {
+      "configuration_changed": "Settings updated",
+      "admission_changed": "IP admission changed"
+    },
+    "states": {
+      "disabled": "Disabled",
+      "unavailable": "Unavailable",
+      "checking": "Checking transition",
+      "applied": "Applied",
+      "pending": "Applying"
+    },
+    "trustedProxies": "Trusted HTTP proxies (CIDR)"
+  }
+}

@@ -1,5 +1,9 @@
 
 <template>
+  <IPControlDialog
+    :visible="ipControlVisible"
+    @close="ipControlVisible = false"
+  />
   <ClientModal 
     :id="modal.id"
     v-model="modal.visible"
@@ -214,6 +218,15 @@
         </v-card>
       </v-menu>
     </v-col>
+    <v-col cols="auto">
+      <v-btn
+        :aria-label="$t('ipControl.title')"
+        variant="text"
+        icon="mdi-shield-account-outline"
+        color="primary"
+        @click="ipControlVisible = true"
+      />
+    </v-col>
   </v-row>
   <v-row>
     <v-col cols="12">
@@ -424,6 +437,7 @@
   </v-row>
 </template>
 <script lang="ts" setup>
+import IPControlDialog from '@/features/antiabuse/components/IPControlDialog.vue'
 import Data from '@/store/modules/data'
 import ClientModal from '@/layouts/modals/Client.vue'
 import ClientAddBulk from '@/layouts/modals/ClientAddBulk.vue'
@@ -477,6 +491,7 @@ const groups = computed((): string[] => {
   return Array.from(new Set(clients.value?.map(c => c.group)))
 })
 
+const ipControlVisible = ref(false)
 const actionMenu = ref(false)
 const filterMenu = ref(false)
 const filterSettings = ref({

@@ -1,0 +1,32 @@
+{
+  "ipControl": {
+    "title": "Контроль IP",
+    "limit": "Лимит IP",
+    "inherit": "Группа: {limit}",
+    "active": "Активные IP",
+    "activityWindow": "Окно активности (с)",
+    "transitionWindow": "Окно перехода (с)",
+    "groups": "Лимиты групп",
+    "journal": "Журнал",
+    "time": "Время",
+    "event": "Событие",
+    "denied": "Отклонённые IP",
+    "errors": {
+      "conflict": "Настройки изменились. Обновите и повторите.",
+      "invalid": "@:error.invalidData",
+      "unavailable": "Контроль IP недоступен."
+    },
+    "events": {
+      "configuration_changed": "Настройки обновлены",
+      "admission_changed": "Допуск IP изменён"
+    },
+    "states": {
+      "disabled": "Выключен",
+      "unavailable": "Недоступно",
+      "checking": "Проверка перехода",
+      "applied": "Применено",
+      "pending": "Применение"
+    },
+    "trustedProxies": "Доверенные HTTP-прокси (CIDR)"
+  }
+}
